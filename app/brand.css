@@ -1,0 +1,381 @@
+/* Supplied identity: keep its original transparent artwork and proportions. */
+.brand-asset {
+  position: relative;
+  display: inline-block;
+  width: 43px;
+  height: 43px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.brand-asset > img {
+  position: absolute;
+  width: 138%;
+  height: 138%;
+  max-width: none;
+  left: -19%;
+  top: -19%;
+  object-fit: contain;
+}
+.brand {
+  gap: 9px;
+}
+.console-brand > .brand-asset:first-child {
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  transform: none;
+  border: 0;
+  border-radius: 0;
+}
+.login-brand > .brand-asset {
+  width: 43px;
+  height: 43px;
+}
+.login-form-icon {
+  background: transparent;
+  border: 0;
+  width: 54px;
+  height: 54px;
+}
+.login-form-icon > .brand-asset {
+  width: 54px;
+  height: 54px;
+}
+#main:focus {
+  outline: none;
+}
+
+.brand-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  color: #eef4df;
+  isolation: isolate;
+  overflow: hidden;
+  height: 100dvh;
+}
+.intro-curtain {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 57%;
+  background: #090c08;
+  transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+}
+.intro-curtain-top {
+  top: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%);
+}
+.intro-curtain-bottom {
+  bottom: 0;
+  clip-path: polygon(0 14%, 100% 0, 100% 100%, 0 100%);
+}
+.intro-scene {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transition:
+    opacity 0.25s,
+    transform 0.4s;
+}
+.intro-aura {
+  position: absolute;
+  width: min(75vw, 650px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #7b9e2723, transparent 63%);
+  animation: intro-bloom 2.6s ease both;
+}
+.intro-overline {
+  position: absolute;
+  top: 17%;
+  left: 20px;
+  right: 20px;
+  text-align: center;
+  color: #8a9b71;
+  font:
+    9px "Geist Mono",
+    monospace;
+  letter-spacing: 3px;
+  animation: intro-caption 0.6s 0.15s both;
+}
+.intro-skip {
+  position: absolute;
+  z-index: 3;
+  top: 30px;
+  right: 36px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 44px;
+  padding: 10px 16px;
+  background: #e1efc108;
+  border: 1px solid #d0f96b28;
+  border-radius: 24px;
+  color: #b9c7a0;
+  font-size: 11px;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.intro-skip:hover {
+  background: #d0f96b18;
+  color: #e5ffc3;
+}
+.intro-skip:focus-visible {
+  outline: 2px solid #d0f96b;
+  outline-offset: 5px;
+}
+.intro-katana {
+  position: absolute;
+  left: calc(50% - 420px);
+  top: calc(50% - 150px);
+  width: 840px;
+  max-width: none;
+  overflow: visible;
+  opacity: 0;
+  transform-origin: 25% 62%;
+  filter: drop-shadow(0 9px 15px #0009);
+  animation: katana-strike 1.3s 0.16s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.katana-edge {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: katana-edge 0.55s 0.3s ease-out both;
+}
+.intro-slash {
+  position: absolute;
+  left: calc(50% - 530px);
+  top: calc(50% - 130px);
+  width: 1060px;
+  max-width: none;
+  overflow: visible;
+  opacity: 0;
+  animation: katana-slash 0.7s 0.72s ease-out both;
+  filter: drop-shadow(0 0 8px #caff6980);
+}
+.intro-slash path {
+  stroke: #d6ff83;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: katana-edge 0.27s 0.73s cubic-bezier(0.1, 0.7, 0.1, 1) both;
+}
+.intro-lockup {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: intro-logo 0.7s 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.intro-lockup .intro-mark {
+  width: 160px;
+  height: 160px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 12px 35px #0008);
+}
+.intro-lockup h1 {
+  font-size: clamp(42px, 5vw, 68px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -4px;
+  margin: 0;
+}
+.intro-lockup h1 span {
+  font-weight: 400;
+}
+.intro-lockup h1 i {
+  color: #d0f96b;
+  font-style: normal;
+}
+.intro-lockup p {
+  color: #97a481;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  margin: 21px 0 0;
+  animation: intro-caption 0.6s 1.35s both;
+}
+.intro-bottom-note {
+  position: absolute;
+  bottom: 12%;
+  text-align: center;
+  color: #65724f;
+  font:
+    8px "Geist Mono",
+    monospace;
+  letter-spacing: 2.4px;
+  animation: intro-caption 0.5s 1.5s both;
+}
+.brand-intro[data-phase="checking"] .intro-scene * {
+  animation-play-state: paused;
+}
+.brand-intro[data-phase="leaving"] .intro-curtain-top {
+  transform: translateY(-105%);
+}
+.brand-intro[data-phase="leaving"] .intro-curtain-bottom {
+  transform: translateY(105%);
+}
+.brand-intro[data-phase="leaving"] .intro-scene {
+  opacity: 0;
+  transform: translateY(-12px) scale(0.97);
+}
+.brand-intro[data-phase="leaving"] .intro-skip {
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes katana-strike {
+  0% {
+    opacity: 0;
+    transform: translate(-200px, 65px) rotate(-16deg);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-25px, 10px) rotate(-4deg);
+  }
+  52% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0);
+  }
+  74% {
+    opacity: 1;
+    transform: translate(90px, -20px) rotate(6deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(470px, -130px) rotate(18deg);
+  }
+}
+@keyframes katana-edge {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes katana-slash {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.6);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1.1);
+  }
+}
+@keyframes intro-logo {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.88);
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes intro-caption {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes intro-bloom {
+  0%,
+  20% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  60%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (max-width: 1000px) {
+  .console-sidebar .console-brand > .brand-asset:first-child {
+    width: 29px;
+    height: 29px;
+  }
+}
+@media (max-width: 760px) {
+  .console-sidebar .console-brand > .brand-asset:first-child {
+    width: 37px;
+    height: 37px;
+  }
+  .brand > .brand-asset {
+    width: 36px;
+    height: 36px;
+  }
+  .intro-skip {
+    top: 18px;
+    right: 18px;
+    padding: 8px 13px;
+  }
+  .intro-katana {
+    width: 620px;
+    left: calc(50% - 310px);
+    top: calc(50% - 125px);
+  }
+  .intro-slash {
+    width: 680px;
+    left: calc(50% - 340px);
+    top: calc(50% - 100px);
+  }
+  .intro-lockup .intro-mark {
+    width: 135px;
+    height: 135px;
+  }
+  .intro-lockup h1 {
+    letter-spacing: -2.8px;
+  }
+  .intro-overline {
+    font-size: 7px;
+    letter-spacing: 2px;
+  }
+  .intro-lockup p {
+    font-size: 10px;
+  }
+  .intro-bottom-note {
+    font-size: 7px;
+    letter-spacing: 1.5px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-intro {
+    display: none;
+  }
+  .brand-intro * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (max-height: 500px) {
+  .intro-lockup .intro-mark {
+    width: 90px;
+    height: 90px;
+    margin-bottom: 10px;
+  }
+  .intro-lockup h1 {
+    font-size: 40px;
+  }
+  .intro-lockup p {
+    margin-top: 12px;
+    font-size: 10px;
+  }
+  .intro-overline {
+    top: 9%;
+  }
+  .intro-bottom-note {
+    bottom: 7%;
+  }
+}
