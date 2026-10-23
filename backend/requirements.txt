@@ -1,0 +1,18 @@
+# SCAMurai backend — Python 3.11+
+# Install from the repository root:
+#   python -m venv .venv
+#   .venv/Scripts/python -m pip install -r backend/requirements.txt   (Windows)
+#   .venv/bin/python -m pip install -r backend/requirements.txt       (macOS/Linux)
+
+# Runtime
+fastapi>=0.115,<1.0
+uvicorn>=0.30,<1.0
+pydantic>=2.7,<3.0
+httpx>=0.27,<1.0
+python-dotenv>=1.0,<2.0
+eth-abi>=5.1,<6.0
+eth-utils>=4.1,<6.0
+
+# Tests
+pytest>=8.0,<10.0
+pytest-asyncio>=0.23,<2.0
