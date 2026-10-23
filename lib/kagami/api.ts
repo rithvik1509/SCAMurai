@@ -126,6 +126,37 @@ export async function retrieveWallet(id: string, signal: AbortSignal) {
     throw new KagamiApiError("The service returned a different investigation.");
   return result;
 }
+export async function checkAllowance(
+  wallet: string,
+  network: NetworkId,
+  token: string,
+  spender: string,
+  signal: AbortSignal,
+) {
+  const result = validateWallet(
+    await request("/wallets/check-allowance", signal, {
+      wallet,
+      network,
+      token,
+      spender,
+    }),
+    true,
+  );
+  if (
+    result.wallet.toLowerCase() !== wallet.toLowerCase() ||
+    result.network !== network ||
+    !result.permissions.some(
+      (p) =>
+        p.type === "erc20" &&
+        p.token?.toLowerCase() === token.toLowerCase() &&
+        p.spender.toLowerCase() === spender.toLowerCase(),
+    )
+  )
+    throw new KagamiApiError(
+      "The service returned evidence for a different allowance.",
+    );
+  return result;
+}
 export async function retrieveAuthorityGraph(id: string, signal: AbortSignal) {
   const p = graphSchema.safeParse(
     await request(`/wallets/${encodeURIComponent(id)}/authority`, signal),

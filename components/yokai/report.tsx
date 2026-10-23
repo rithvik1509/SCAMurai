@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Copy, Plus } from "lucide-react";
+import { EvidenceSummary } from "./evidence-summary";
 import {
   profileLabels,
   statusLabels,
@@ -24,9 +25,15 @@ export function InvestigationReport({
       `Target: ${job.targetUrl}`,
       `Status: ${statusLabels[job.status]}`,
       `Profiles: ${job.profiles.map((p) => profileLabels[p]).join(", ")}`,
+      `Recorded: ${new Date(job.updatedAt).toISOString()}`,
+      "Capture coverage",
+      ...result!.captures.map(
+        (c) =>
+          `${c.label}: ${c.availability}\nFinal URL: ${c.finalUrl}\n${c.notes.join("\n")}`,
+      ),
       ...result!.findings.map(
         (f) =>
-          `${f.title}\n${f.explanation}\nEvidence: ${f.evidenceIds.join(", ")}`,
+          `${f.title}\nReview priority: ${f.severity || "Not supplied"}\n${f.explanation}\n${f.confidence || ""}\nEvidence: ${f.evidenceIds.join(", ")}`,
       ),
       "Risk indicators",
       ...result!.riskIndicators,
@@ -67,11 +74,16 @@ export function InvestigationReport({
           {new Date(job.updatedAt).toLocaleString()}
         </small>
       </div>
+      <EvidenceSummary captures={result.captures} findings={result.findings} />
       <h3>Observed differences</h3>
       {result.findings.map((f) => (
         <details className={`yk-finding tone-${f.tone}`} key={f.id} open>
           <summary>{f.title}</summary>
+          {f.severity && (
+            <p className="yk-field-note">Review priority: {f.severity}</p>
+          )}
           <p>{f.explanation}</p>
+          {f.confidence && <p className="yk-field-note">{f.confidence}</p>}
           <button
             className="yk-inline-link"
             onClick={() => onEvidence(f.evidenceIds)}

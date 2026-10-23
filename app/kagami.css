@@ -1697,3 +1697,34 @@
   font-size: 11px;
   color: #71866a;
 }
+.kg-specific-allowance {
+  border-top: 1px solid var(--kg-line);
+  padding-top: 18px;
+  margin-top: 18px;
+}
+.kg-specific-allowance summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+.kg-specific-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+.kg-specific-fields label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  min-width: 0;
+}
+.kg-specific-fields input {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .kg-specific-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

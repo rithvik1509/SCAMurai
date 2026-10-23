@@ -72,6 +72,8 @@ export function KagamiWorkspace({
   const [removed, setRemoved] = useState<string[]>([]);
   const [selected, setSelected] = useState("wallet");
   const [detail, setDetail] = useState<string | null>(null);
+  const [tokenAddress, setTokenAddress] = useState("");
+  const [spenderAddress, setSpenderAddress] = useState("");
   const analysis = state.analysis;
   const capability = state.capabilities?.networks.find(
     (n) => n.id === state.network,
@@ -285,6 +287,56 @@ export function KagamiWorkspace({
               </button>
             )}
           </div>
+          {!state.demo && (
+            <details className="kg-specific-allowance">
+              <summary>Check a specific token allowance</summary>
+              <p className="kg-note">
+                Know the token and spender? Verify their current allowance
+                directly, even when history indexing is incomplete. This creates
+                no approval.
+              </p>
+              <div className="kg-specific-fields">
+                <label>
+                  Token contract address
+                  <input
+                    aria-label="Allowance token contract"
+                    value={tokenAddress}
+                    onChange={(e) => setTokenAddress(e.target.value)}
+                    placeholder="0x…"
+                    maxLength={42}
+                    spellCheck={false}
+                    disabled={state.busy}
+                  />
+                </label>
+                <label>
+                  Spender address
+                  <input
+                    aria-label="Allowance spender address"
+                    value={spenderAddress}
+                    onChange={(e) => setSpenderAddress(e.target.value)}
+                    placeholder="0x…"
+                    maxLength={42}
+                    spellCheck={false}
+                    disabled={state.busy}
+                  />
+                </label>
+              </div>
+              <button
+                type="button"
+                className="kg-secondary"
+                disabled={state.busy || !capability?.walletAnalysis}
+                onClick={() => {
+                  void state
+                    .checkAllowance(tokenAddress, spenderAddress)
+                    .then((success) => {
+                      if (success) navigate("authority");
+                    });
+                }}
+              >
+                Check allowance <ArrowRight size={15} />
+              </button>
+            </details>
+          )}
           {state.error && (
             <div className="kg-error kg-error-row" role="alert">
               <span>{state.error}</span>
@@ -304,9 +356,10 @@ export function KagamiWorkspace({
           )}
           {state.capabilities?.available && !capability?.walletAnalysis && (
             <p className="kg-notice">
-              Wallet analysis is unsupported on{" "}
-              {networks.find((n) => n.id === state.network)?.label}. Choose a
-              network supported by the selected service.
+              The service has no wallet data connection for{" "}
+              {networks.find((n) => n.id === state.network)?.label}. Your
+              address can still be entered. Choose a connected network or retry
+              after its connection is configured.
             </p>
           )}
         </form>

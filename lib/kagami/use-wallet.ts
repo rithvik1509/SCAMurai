@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { config } from "../config";
 import {
   analyzeWallet,
+  checkAllowance,
   getCapabilities,
   retrieveWallet,
   validateWallet,
@@ -89,11 +90,17 @@ export function useWallet() {
     setDemo(!demo);
     setWallet(!demo ? demoWallet : "");
   };
-  async function analyze() {
+  async function analyze(pair?: { token: string; spender: string }) {
     setError("");
     if (!isAddress(wallet)) {
       setError(
         "Enter a public EVM address: 0x followed by 40 hexadecimal characters.",
+      );
+      return;
+    }
+    if (pair && (!isAddress(pair.token) || !isAddress(pair.spender) || demo)) {
+      setError(
+        "Enter valid token and spender addresses while using the connected service.",
       );
       return;
     }
@@ -103,7 +110,7 @@ export function useWallet() {
       !caps.networks.find((n) => n.id === network)?.walletAnalysis
     ) {
       setError(
-        "Wallet analysis is not supported on this network by the selected service.",
+        "The selected network has no wallet data connection. Your address has been kept; choose a connected network or retry the connection.",
       );
       return;
     }
@@ -122,7 +129,15 @@ export function useWallet() {
     try {
       const result = demo
         ? validateWallet(createWalletFixture(network))
-        : await analyzeWallet(wallet, network, controller.signal);
+        : pair
+          ? await checkAllowance(
+              wallet,
+              network,
+              pair.token,
+              pair.spender,
+              controller.signal,
+            )
+          : await analyzeWallet(wallet, network, controller.signal);
       if (!controller.signal.aborted && revision.current === version) {
         receive(result);
         return true;
@@ -172,6 +187,8 @@ export function useWallet() {
     changeNetwork,
     changeDemo,
     analyze,
+    checkAllowance: (token: string, spender: string) =>
+      analyze({ token: token.trim(), spender: spender.trim() }),
     useExample: () => changeWallet(demoWallet),
     retry: () => {
       setError("");

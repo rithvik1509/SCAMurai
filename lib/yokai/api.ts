@@ -64,6 +64,8 @@ const capture = z.object({
       headings: z.array(text),
       linkCount: z.number().int().nonnegative(),
       language: text,
+      textBlocks: z.array(text).max(200).optional(),
+      actionLabels: z.array(text).max(100).optional(),
     })
     .nullable(),
   forms: z
@@ -91,6 +93,8 @@ const result = z
         title: text,
         explanation: text,
         tone,
+        severity: z.enum(["informational", "low", "medium", "high"]).optional(),
+        confidence: text.optional(),
         evidenceIds: refs,
       }),
     ),
@@ -194,6 +198,7 @@ const capabilities = z.object({
   allowedOrigins: z.array(z.string().url()),
   authorizationPolicy: text,
   cancellation: z.boolean(),
+  publicTargets: z.boolean().optional(),
 });
 export class YokaiApiError extends Error {}
 

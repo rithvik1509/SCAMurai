@@ -16,6 +16,7 @@ import { createTransactionFixture, demoTransaction } from "@/lib/kagami/mocks";
 import { transactionInputSchema } from "@/lib/kagami/schemas";
 import {
   networks,
+  buildErc20Calldata,
   type KagamiCapabilities,
   type NetworkId,
   type TransactionInput,
@@ -44,6 +45,12 @@ export function FutureView({
   const [action, setAction] = useState<"decode" | "preview">("decode");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [builderMethod, setBuilderMethod] = useState<
+    "approve" | "transfer" | "transferFrom"
+  >("approve");
+  const [builderDestination, setBuilderDestination] = useState("");
+  const [builderAmount, setBuilderAmount] = useState("0");
+  const [builderOwner, setBuilderOwner] = useState("");
   const request = useRef<AbortController | null>(null);
   const version = useRef(0);
   const available = capabilities?.networks.find((n) => n.id === network);
@@ -219,6 +226,91 @@ export function FutureView({
           <p className="kg-note">
             Exact integer units. 1 ETH = 1,000,000,000,000,000,000 wei.
           </p>
+          {!demo && (
+            <details className="kg-specific-allowance">
+              <summary>Build ERC-20 calldata</summary>
+              <p className="kg-note">
+                Prepare unsigned inputs for decoding or preview. Enter exact raw
+                token units; this does not send a transaction.
+              </p>
+              <div className="kg-specific-fields">
+                <label>
+                  Operation
+                  <select
+                    aria-label="ERC-20 operation"
+                    value={builderMethod}
+                    onChange={(e) =>
+                      setBuilderMethod(e.target.value as typeof builderMethod)
+                    }
+                  >
+                    <option value="approve">Approve a spender</option>
+                    <option value="transfer">Transfer tokens</option>
+                    <option value="transferFrom">Transfer from an owner</option>
+                  </select>
+                </label>
+                <label>
+                  {builderMethod === "approve" ? "Spender" : "Recipient"}{" "}
+                  address
+                  <input
+                    aria-label="Builder destination address"
+                    value={builderDestination}
+                    onChange={(e) => setBuilderDestination(e.target.value)}
+                    maxLength={42}
+                    spellCheck={false}
+                  />
+                </label>
+                {builderMethod === "transferFrom" && (
+                  <label>
+                    Owner address
+                    <input
+                      aria-label="Builder owner address"
+                      value={builderOwner}
+                      onChange={(e) => setBuilderOwner(e.target.value)}
+                      maxLength={42}
+                      spellCheck={false}
+                    />
+                  </label>
+                )}
+                <label>
+                  Amount in raw units
+                  <input
+                    aria-label="Builder raw amount"
+                    value={builderAmount}
+                    onChange={(e) => setBuilderAmount(e.target.value)}
+                    maxLength={78}
+                    inputMode="numeric"
+                  />
+                </label>
+              </div>
+              <button
+                type="button"
+                className="kg-secondary"
+                disabled={busy}
+                onClick={() => {
+                  invalidate();
+                  try {
+                    setCalldata(
+                      buildErc20Calldata(
+                        builderMethod,
+                        builderDestination.trim(),
+                        builderAmount.trim(),
+                        builderOwner.trim(),
+                      ),
+                    );
+                    setValueWei("0");
+                  } catch (e) {
+                    setError(
+                      e instanceof Error
+                        ? e.message
+                        : "Could not build calldata.",
+                    );
+                  }
+                }}
+              >
+                Use generated calldata
+              </button>
+            </details>
+          )}
           <details className="kg-purpose" open={initialPurpose || undefined}>
             <summary>
               Expected purpose <span>Optional</span>

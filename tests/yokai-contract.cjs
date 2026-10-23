@@ -16,6 +16,19 @@ const input = {
     includeNetwork: true,
   },
 };
+test("live review metadata survives validation without changing legacy fixtures", () => {
+  const fixture = createDemoInvestigation("payment", input);
+  fixture.result.findings[0].severity = "high";
+  fixture.result.findings[0].confidence =
+    "Observed form structure only; intent is unknown.";
+  fixture.result.captures[0].structure.textBlocks = ["Simulated deposit; no real payments"];
+  fixture.result.captures[0].structure.actionLabels = ["Continue demo"];
+  const result = api.validateInvestigation(fixture).result;
+  assert.equal(result.findings[0].severity, "high");
+  assert.match(result.findings[0].confidence, /intent is unknown/);
+  assert.deepEqual(result.captures[0].structure.textBlocks, ["Simulated deposit; no real payments"]);
+  assert.deepEqual(result.captures[0].structure.actionLabels, ["Continue demo"]);
+});
 test("three fixtures preserve distinct evidence and explicit valid relationships", () => {
   for (const scenario of ["responsive", "payment", "redirect"]) {
     const job = api.validateInvestigation(

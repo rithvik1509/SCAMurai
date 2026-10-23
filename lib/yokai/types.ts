@@ -35,7 +35,13 @@ export interface BrowserCapture {
   notes: string[];
   screenshot: { url: string; kind: "capture" | "illustration" } | null;
   redirects: { from: string; to: string; status: number }[];
-  structure: { headings: string[]; linkCount: number; language: string } | null;
+  structure: {
+    headings: string[];
+    linkCount: number;
+    language: string;
+    textBlocks?: string[];
+    actionLabels?: string[];
+  } | null;
   forms: {
     id: string;
     label: string;
@@ -52,6 +58,8 @@ export interface Finding {
   explanation: string;
   tone: EvidenceTone;
   evidenceIds: string[];
+  severity?: "informational" | "low" | "medium" | "high";
+  confidence?: string;
 }
 export interface EvidenceNode {
   id: string;
@@ -108,6 +116,7 @@ export interface InvestigationCapabilities {
   allowedOrigins: string[];
   authorizationPolicy: string;
   cancellation: boolean;
+  publicTargets?: boolean;
 }
 export const profileLabels: Record<ProfileId, string> = {
   desktop: "Desktop",
