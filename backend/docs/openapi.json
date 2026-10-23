@@ -1,0 +1,3126 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SCAMurai API",
+    "description": "Evidence-based financial scam awareness API. Analyses explain the promises a message makes, the action it requests, and what a decoded instruction actually authorizes. Signals are risk indicators, not proof of fraud or theft.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Service health",
+        "description": "Liveness probe with stable fields. It performs no external calls and exposes no configuration secrets.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyze": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Analyse a text message for scam indicators",
+        "description": "Analyses a plain-text message with a fixed, deterministic rule baseline (`scam_text_rules` v1.0.0) and static link checks (`url_static_rules` v1.0.0). Every signal quotes exact excerpts of the submitted text and carries its rule provenance. Links are parsed but never opened, resolved, or fetched. The 0-100 risk score is the capped sum of documented rule weights; it is an indicator, not a probability or proof of fraud. No LLM, database, or message storage is involved.",
+        "operationId": "analyze_text_api_v1_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TextAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextAnalysisResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body exceeds MAX_REQUEST_BYTES.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request body failed schema or type validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kage/health": {
+      "get": {
+        "tags": [
+          "KAGE / YOKAI"
+        ],
+        "summary": "YOKAI browser worker readiness",
+        "operationId": "health_api_v1_kage_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Api V1 Kage Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kage/capabilities": {
+      "get": {
+        "tags": [
+          "KAGE / YOKAI"
+        ],
+        "summary": "YOKAI investigation capabilities",
+        "operationId": "capabilities_api_v1_kage_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationCapabilities"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kage/investigations": {
+      "post": {
+        "tags": [
+          "KAGE / YOKAI"
+        ],
+        "summary": "Queue an authorized multi-profile website investigation",
+        "operationId": "create_investigation_api_v1_kage_investigations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestigationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Investigation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kage/investigations/{investigation_id}": {
+      "get": {
+        "tags": [
+          "KAGE / YOKAI"
+        ],
+        "summary": "Get investigation status and completed results",
+        "operationId": "get_investigation_api_v1_kage_investigations__investigation_id__get",
+        "parameters": [
+          {
+            "name": "investigation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Investigation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Investigation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kage/investigations/{investigation_id}/evidence": {
+      "get": {
+        "tags": [
+          "KAGE / YOKAI"
+        ],
+        "summary": "Get profile capture evidence",
+        "operationId": "get_evidence_api_v1_kage_investigations__investigation_id__evidence_get",
+        "parameters": [
+          {
+            "name": "investigation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Investigation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BrowserCapture"
+                  },
+                  "title": "Response Get Evidence Api V1 Kage Investigations  Investigation Id  Evidence Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kage/investigations/{investigation_id}/comparison": {
+      "get": {
+        "tags": [
+          "KAGE / YOKAI"
+        ],
+        "summary": "Get differential findings and evidence graph",
+        "operationId": "get_comparison_api_v1_kage_investigations__investigation_id__comparison_get",
+        "parameters": [
+          {
+            "name": "investigation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Investigation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kage/investigations/{investigation_id}/screenshots/{capture_id}.png": {
+      "get": {
+        "tags": [
+          "KAGE / YOKAI"
+        ],
+        "summary": "Get a captured browser screenshot",
+        "operationId": "get_screenshot_api_v1_kage_investigations__investigation_id__screenshots__capture_id__png_get",
+        "parameters": [
+          {
+            "name": "investigation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Investigation Id"
+            }
+          },
+          {
+            "name": "capture_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Capture Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "image/png": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kage/investigations/{investigation_id}/counterfactual": {
+      "post": {
+        "tags": [
+          "KAGE / YOKAI"
+        ],
+        "summary": "Queue a controlled counterfactual profile rerun",
+        "operationId": "counterfactual_api_v1_kage_investigations__investigation_id__counterfactual_post",
+        "parameters": [
+          {
+            "name": "investigation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Investigation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CounterfactualRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Investigation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kage/investigations/{investigation_id}/cancel": {
+      "post": {
+        "tags": [
+          "KAGE / YOKAI"
+        ],
+        "summary": "Cancel an investigation",
+        "operationId": "cancel_investigation_api_v1_kage_investigations__investigation_id__cancel_post",
+        "parameters": [
+          {
+            "name": "investigation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Investigation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Investigation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kagami/capabilities": {
+      "get": {
+        "tags": [
+          "KAGAMI"
+        ],
+        "summary": "Capabilities",
+        "operationId": "capabilities_api_v1_kagami_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kagami/wallets/analyze": {
+      "post": {
+        "tags": [
+          "KAGAMI"
+        ],
+        "summary": "Analyze Wallet",
+        "operationId": "analyze_wallet_api_v1_kagami_wallets_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletAnalysis"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kagami/wallets/check-allowance": {
+      "post": {
+        "tags": [
+          "KAGAMI"
+        ],
+        "summary": "Check Allowance",
+        "operationId": "check_allowance_api_v1_kagami_wallets_check_allowance_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AllowanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletAnalysis"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kagami/wallets/{identifier}": {
+      "get": {
+        "tags": [
+          "KAGAMI"
+        ],
+        "summary": "Get Wallet",
+        "operationId": "get_wallet_api_v1_kagami_wallets__identifier__get",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identifier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletAnalysis"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kagami/wallets/{identifier}/authority": {
+      "get": {
+        "tags": [
+          "KAGAMI"
+        ],
+        "summary": "Authority",
+        "operationId": "authority_api_v1_kagami_wallets__identifier__authority_get",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identifier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Graph"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kagami/wallets/{identifier}/approvals": {
+      "get": {
+        "tags": [
+          "KAGAMI"
+        ],
+        "summary": "Approvals",
+        "operationId": "approvals_api_v1_kagami_wallets__identifier__approvals_get",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identifier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Permission"
+                  },
+                  "title": "Response Approvals Api V1 Kagami Wallets  Identifier  Approvals Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kagami/wallets/{identifier}/delegations": {
+      "get": {
+        "tags": [
+          "KAGAMI"
+        ],
+        "summary": "Delegations",
+        "operationId": "delegations_api_v1_kagami_wallets__identifier__delegations_get",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identifier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Permission"
+                  },
+                  "title": "Response Delegations Api V1 Kagami Wallets  Identifier  Delegations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kagami/transactions/decode": {
+      "post": {
+        "tags": [
+          "KAGAMI"
+        ],
+        "summary": "Decode",
+        "operationId": "decode_api_v1_kagami_transactions_decode_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kagami/transactions/preview": {
+      "post": {
+        "tags": [
+          "KAGAMI"
+        ],
+        "summary": "Preview",
+        "operationId": "preview_api_v1_kagami_transactions_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "APIErrorBody": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Message"
+          },
+          "details": {
+            "items": {
+              "$ref": "#/components/schemas/APIErrorDetail"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Details"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "APIErrorBody",
+        "description": "Inner error object shared by every failure response."
+      },
+      "APIErrorDetail": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Field",
+            "description": "Location such as ``body.message`` or ``request``."
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Type",
+            "description": "Pydantic error type, e.g. ``missing``."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "field",
+          "reason",
+          "type"
+        ],
+        "title": "APIErrorDetail",
+        "description": "One field-level or request-level error detail.\n\nNever carries the submitted value: request bodies may contain sensitive\ntext and must not be reflected back in errors."
+      },
+      "APIErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/APIErrorBody"
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 8,
+            "title": "Request Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "error",
+          "request_id"
+        ],
+        "title": "APIErrorResponse",
+        "description": "Single envelope returned for every 4xx/5xx API response."
+      },
+      "AllowanceRequest": {
+        "properties": {
+          "wallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Wallet"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "sepolia",
+              "arbitrum"
+            ],
+            "title": "Network"
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Token"
+          },
+          "spender": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Spender"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "wallet",
+          "network",
+          "token",
+          "spender"
+        ],
+        "title": "AllowanceRequest"
+      },
+      "AnalysisLimitations": {
+        "properties": {
+          "notes": {
+            "items": {
+              "type": "string",
+              "maxLength": 2000,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Notes",
+            "description": "Known gaps in the evidence available to the analysis."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AnalysisLimitations",
+        "description": "Explicit caveats that must accompany an analysis response.\n\nLimitations are part of the API contract, not an optional nicety: missing\nmetadata, unverified URLs, or undecoded call data all belong here."
+      },
+      "AnalysisStatus": {
+        "type": "string",
+        "enum": [
+          "completed",
+          "partial"
+        ],
+        "title": "AnalysisStatus",
+        "description": "How complete a future analysis result is."
+      },
+      "BrowserCapture": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "profileId": {
+            "$ref": "#/components/schemas/ProfileId"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Label"
+          },
+          "finalUrl": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Finalurl"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Title"
+          },
+          "viewport": {
+            "$ref": "#/components/schemas/Viewport"
+          },
+          "userAgent": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Useragent"
+          },
+          "cookieState": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Cookiestate"
+          },
+          "availability": {
+            "type": "string",
+            "title": "Availability"
+          },
+          "notes": {
+            "items": {
+              "type": "string",
+              "maxLength": 12000
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Notes"
+          },
+          "screenshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScreenshotReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redirects": {
+            "items": {
+              "$ref": "#/components/schemas/RedirectObservation"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Redirects"
+          },
+          "structure": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PageStructure"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "forms": {
+            "items": {
+              "$ref": "#/components/schemas/FormObservation"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Forms"
+          },
+          "network": {
+            "items": {
+              "$ref": "#/components/schemas/NetworkObservation"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "title": "Network"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "profileId",
+          "label",
+          "finalUrl",
+          "title",
+          "viewport",
+          "userAgent",
+          "cookieState",
+          "availability",
+          "notes",
+          "redirects",
+          "forms",
+          "network"
+        ],
+        "title": "BrowserCapture"
+      },
+      "CancelRequest": {
+        "properties": {},
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CancelRequest",
+        "description": "Empty request object for the optional cancellation endpoint."
+      },
+      "Counterfactual": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Title"
+          },
+          "baseline": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Baseline"
+          },
+          "changedVariable": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Changedvariable"
+          },
+          "observedResult": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Observedresult"
+          },
+          "finding": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Finding"
+          },
+          "conclusion": {
+            "type": "string",
+            "title": "Conclusion"
+          },
+          "evidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Evidenceids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "baseline",
+          "changedVariable",
+          "observedResult",
+          "finding",
+          "conclusion",
+          "evidenceIds"
+        ],
+        "title": "Counterfactual"
+      },
+      "CounterfactualRequest": {
+        "properties": {
+          "changedVariable": {
+            "type": "string",
+            "enum": [
+              "mobile_profile",
+              "returning_visitor_cookie"
+            ],
+            "title": "Changedvariable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "changedVariable"
+        ],
+        "title": "CounterfactualRequest",
+        "description": "Request one supported profile-level counterfactual rerun."
+      },
+      "CoverageReport": {
+        "properties": {
+          "approvals": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Approvals"
+          },
+          "delegations": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Delegations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "approvals",
+          "delegations"
+        ],
+        "title": "CoverageReport"
+      },
+      "Edge": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "permissionId": {
+            "type": "string",
+            "title": "Permissionid"
+          },
+          "evidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidenceids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "target",
+          "label",
+          "permissionId",
+          "evidenceIds"
+        ],
+        "title": "Edge"
+      },
+      "Effect": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "approval",
+              "balance",
+              "transfer",
+              "other"
+            ],
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "asset": {
+            "type": "string",
+            "title": "Asset"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before"
+          },
+          "after": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "incoming",
+              "outgoing",
+              "permission",
+              "none"
+            ],
+            "title": "Direction"
+          },
+          "evidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidenceids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "asset",
+          "before",
+          "after",
+          "direction",
+          "evidenceIds"
+        ],
+        "title": "Effect"
+      },
+      "Environment": {
+        "type": "string",
+        "enum": [
+          "development",
+          "test",
+          "production"
+        ],
+        "title": "Environment",
+        "description": "Deployment environment, used only for diagnostics and CORS defaults."
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "bad_request",
+          "validation_error",
+          "not_found",
+          "method_not_allowed",
+          "payload_too_large",
+          "unsupported_media_type",
+          "rate_limited",
+          "internal_error",
+          "service_unavailable",
+          "http_error"
+        ],
+        "title": "ErrorCode",
+        "description": "Stable machine-readable error codes for the error envelope."
+      },
+      "Evidence": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "chain",
+              "service"
+            ],
+            "title": "Source"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "source",
+          "reference"
+        ],
+        "title": "Evidence"
+      },
+      "EvidenceEdge": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Label"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/EvidenceTone"
+          },
+          "evidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Evidenceids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "target",
+          "label",
+          "tone",
+          "evidenceIds"
+        ],
+        "title": "EvidenceEdge"
+      },
+      "EvidenceGraph": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceNode"
+            },
+            "type": "array",
+            "maxItems": 2000,
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceEdge"
+            },
+            "type": "array",
+            "maxItems": 5000,
+            "title": "Edges"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "title": "EvidenceGraph"
+      },
+      "EvidenceNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Label"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Description"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/EvidenceTone"
+          },
+          "evidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Evidenceids"
+          },
+          "profileId": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfileId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Position"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "description",
+          "tone",
+          "evidenceIds",
+          "position"
+        ],
+        "title": "EvidenceNode"
+      },
+      "EvidenceSource": {
+        "type": "string",
+        "enum": [
+          "message_text",
+          "url_static",
+          "decoded_calldata",
+          "trusted_metadata",
+          "user_context",
+          "model_output"
+        ],
+        "title": "EvidenceSource",
+        "description": "Where the facts behind a signal came from.\n\nSources are kept explicit so decoded blockchain facts can never be\nsilently replaced by model output."
+      },
+      "EvidenceTone": {
+        "type": "string",
+        "enum": [
+          "normal",
+          "difference",
+          "sensitive",
+          "unavailable"
+        ],
+        "title": "EvidenceTone"
+      },
+      "Finding": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Title"
+          },
+          "explanation": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Explanation"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/EvidenceTone"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "informational",
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Severity"
+          },
+          "confidence": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Confidence"
+          },
+          "evidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Evidenceids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "explanation",
+          "tone",
+          "severity",
+          "confidence",
+          "evidenceIds"
+        ],
+        "title": "Finding"
+      },
+      "FormObservation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Label"
+          },
+          "action": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Action"
+          },
+          "method": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Method"
+          },
+          "fields": {
+            "items": {
+              "type": "string",
+              "maxLength": 12000
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Fields"
+          },
+          "sensitive": {
+            "type": "boolean",
+            "title": "Sensitive"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "action",
+          "method",
+          "fields",
+          "sensitive"
+        ],
+        "title": "FormObservation"
+      },
+      "Graph": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/Edge"
+            },
+            "type": "array",
+            "title": "Edges"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "title": "Graph"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Service"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ServiceStatus"
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Version"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/Environment"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "service",
+          "status",
+          "version",
+          "environment",
+          "timestamp"
+        ],
+        "title": "HealthResponse",
+        "description": "Stable payload for ``GET /health``."
+      },
+      "Investigation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo",
+            "default": false
+          },
+          "targetUrl": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Targeturl"
+          },
+          "profiles": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileId"
+            },
+            "type": "array",
+            "title": "Profiles"
+          },
+          "status": {
+            "$ref": "#/components/schemas/InvestigationStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/InvestigationEvent"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Events"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 12000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestigationResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "targetUrl",
+          "profiles",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "events"
+        ],
+        "title": "Investigation"
+      },
+      "InvestigationCapabilities": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "profiles": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileId"
+            },
+            "type": "array",
+            "title": "Profiles"
+          },
+          "allowedOrigins": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowedorigins"
+          },
+          "authorizationPolicy": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Authorizationpolicy"
+          },
+          "cancellation": {
+            "type": "boolean",
+            "title": "Cancellation",
+            "default": false
+          },
+          "publicTargets": {
+            "type": "boolean",
+            "title": "Publictargets",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "available",
+          "profiles",
+          "allowedOrigins",
+          "authorizationPolicy"
+        ],
+        "title": "InvestigationCapabilities"
+      },
+      "InvestigationEvent": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/InvestigationStatus"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Message"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "at",
+          "message"
+        ],
+        "title": "InvestigationEvent"
+      },
+      "InvestigationRequest": {
+        "properties": {
+          "targetUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 8,
+            "title": "Targeturl"
+          },
+          "profiles": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileId"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 2,
+            "title": "Profiles"
+          },
+          "authorizationConfirmed": {
+            "type": "boolean",
+            "title": "Authorizationconfirmed"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/InvestigationSettings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "targetUrl",
+          "profiles",
+          "authorizationConfirmed"
+        ],
+        "title": "InvestigationRequest"
+      },
+      "InvestigationResult": {
+        "properties": {
+          "captures": {
+            "items": {
+              "$ref": "#/components/schemas/BrowserCapture"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Captures"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Findings"
+          },
+          "riskIndicators": {
+            "items": {
+              "type": "string",
+              "maxLength": 12000
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Riskindicators"
+          },
+          "limitations": {
+            "items": {
+              "type": "string",
+              "maxLength": 12000
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Limitations"
+          },
+          "recommendations": {
+            "items": {
+              "type": "string",
+              "maxLength": 12000
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Recommendations"
+          },
+          "graph": {
+            "$ref": "#/components/schemas/EvidenceGraph"
+          },
+          "counterfactuals": {
+            "items": {
+              "$ref": "#/components/schemas/Counterfactual"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Counterfactuals"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "captures",
+          "findings",
+          "riskIndicators",
+          "limitations",
+          "recommendations",
+          "graph",
+          "counterfactuals"
+        ],
+        "title": "InvestigationResult"
+      },
+      "InvestigationSettings": {
+        "properties": {
+          "timeoutSeconds": {
+            "type": "integer",
+            "maximum": 45.0,
+            "minimum": 5.0,
+            "title": "Timeoutseconds",
+            "default": 20
+          },
+          "captureScreenshots": {
+            "type": "boolean",
+            "title": "Capturescreenshots",
+            "default": true
+          },
+          "includeNetwork": {
+            "type": "boolean",
+            "title": "Includenetwork",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "InvestigationSettings"
+      },
+      "InvestigationStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "initializing",
+          "loading",
+          "collecting",
+          "comparing",
+          "completed",
+          "failed",
+          "cancelled",
+          "unsupported"
+        ],
+        "title": "InvestigationStatus"
+      },
+      "Mismatch": {
+        "properties": {
+          "finding": {
+            "type": "string",
+            "title": "Finding"
+          },
+          "evidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidenceids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "finding",
+          "evidenceIds"
+        ],
+        "title": "Mismatch"
+      },
+      "NetworkObservation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Url"
+          },
+          "method": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Method"
+          },
+          "kind": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Kind"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "method",
+          "kind"
+        ],
+        "title": "NetworkObservation"
+      },
+      "Node": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "wallet",
+              "permission",
+              "token",
+              "spender",
+              "delegation"
+            ],
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^0x[0-9a-fA-F]{40}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "permissionId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permissionid"
+          },
+          "position": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Position"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "position"
+        ],
+        "title": "Node"
+      },
+      "PageStructure": {
+        "properties": {
+          "headings": {
+            "items": {
+              "type": "string",
+              "maxLength": 12000
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Headings"
+          },
+          "linkCount": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Linkcount"
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Language"
+          },
+          "textBlocks": {
+            "items": {
+              "type": "string",
+              "maxLength": 12000
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Textblocks"
+          },
+          "actionLabels": {
+            "items": {
+              "type": "string",
+              "maxLength": 12000
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Actionlabels"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "headings",
+          "linkCount",
+          "language"
+        ],
+        "title": "PageStructure"
+      },
+      "Parameter": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "title": "Parameter"
+      },
+      "Permission": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "erc20",
+              "delegation"
+            ],
+            "title": "Type"
+          },
+          "owner": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Owner"
+          },
+          "spender": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Spender"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^0x[0-9a-fA-F]{40}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "decimals": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 255.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decimals"
+          },
+          "allowanceRaw": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 78,
+                "pattern": "^(0|[1-9][0-9]*)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowanceraw"
+          },
+          "allowanceKind": {
+            "type": "string",
+            "enum": [
+              "finite",
+              "unlimited",
+              "zero",
+              "not-applicable"
+            ],
+            "title": "Allowancekind"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "modelRemovable": {
+            "type": "boolean",
+            "title": "Modelremovable"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "none",
+              "review",
+              "high",
+              "unknown"
+            ],
+            "title": "Severity"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Checkedat"
+          },
+          "evidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidenceids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "owner",
+          "spender",
+          "allowanceKind",
+          "active",
+          "modelRemovable",
+          "severity",
+          "title",
+          "explanation",
+          "checkedAt",
+          "evidenceIds"
+        ],
+        "title": "Permission"
+      },
+      "ProfileId": {
+        "type": "string",
+        "enum": [
+          "desktop",
+          "mobile",
+          "returning"
+        ],
+        "title": "ProfileId"
+      },
+      "RecommendedAction": {
+        "properties": {
+          "priority": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Priority",
+            "description": "Lower numbers should be read first."
+          },
+          "action": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Action"
+          },
+          "rationale": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Rationale"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "priority",
+          "action",
+          "rationale"
+        ],
+        "title": "RecommendedAction",
+        "description": "One ordered, non-executing action for the recipient."
+      },
+      "RedirectObservation": {
+        "properties": {
+          "from": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "From"
+          },
+          "to": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "To"
+          },
+          "status": {
+            "type": "integer",
+            "maximum": 399.0,
+            "minimum": 300.0,
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "status"
+        ],
+        "title": "RedirectObservation"
+      },
+      "RiskLevel": {
+        "type": "string",
+        "enum": [
+          "unknown",
+          "low",
+          "moderate",
+          "high",
+          "critical"
+        ],
+        "title": "RiskLevel",
+        "description": "Aggregate, rule-derived risk indicator.\n\n``unknown`` is a first-class value: absent or ambiguous evidence must not\nbe converted into a numeric or arbitrary risk score. A high level is a\nreason to pause and verify, never proof of fraud or theft."
+      },
+      "RuleProvenance": {
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{1,63}$",
+            "title": "Rule Id"
+          },
+          "rule_set": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Rule Set",
+            "description": "Name of the rule collection that produced the signal."
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Version",
+            "description": "Version of the rule collection, e.g. ``1.0.0``."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rule_id",
+          "rule_set",
+          "version"
+        ],
+        "title": "RuleProvenance",
+        "description": "Where a deterministic signal came from.\n\n``rule_id`` matches a documented rule. ``rule_set`` and ``version`` let a\nclient tell when the rule baseline changed. Signals produced by other\nsources (for example decoded calldata) may omit provenance."
+      },
+      "ScamCategory": {
+        "type": "string",
+        "enum": [
+          "none",
+          "urgency_pressure",
+          "bank_kyc_impersonation",
+          "otp_theft",
+          "government_impersonation",
+          "crypto_reward",
+          "payment_demand",
+          "investment_scheme",
+          "suspicious_url"
+        ],
+        "title": "ScamCategory",
+        "description": "Dominant indicator family reported for an analysis.\n\nCategories describe the *message pattern* that produced the strongest\nevidence. They are not accusations against a sender, and ``none`` means no\ndocumented indicator matched."
+      },
+      "ScoreContribution": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{1,63}$",
+            "title": "Code"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ScamCategory"
+          },
+          "points": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Points"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "category",
+          "points"
+        ],
+        "title": "ScoreContribution",
+        "description": "Points one signal contributed before the total was capped.\n\nA URL-path finding that merely corroborates a text finding contributes\n``0`` so the same theme is not counted twice across sources."
+      },
+      "ScoringBreakdown": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "const": "weighted_rule_sum",
+            "title": "Method",
+            "description": "Stable name of the scoring method."
+          },
+          "raw_total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Raw Total"
+          },
+          "applied_total": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Applied Total"
+          },
+          "capped": {
+            "type": "boolean",
+            "title": "Capped"
+          },
+          "contributions": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreContribution"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Contributions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "method",
+          "raw_total",
+          "applied_total",
+          "capped"
+        ],
+        "title": "ScoringBreakdown",
+        "description": "Transparent arithmetic behind ``risk_score``.\n\n``raw_total`` is the sum of per-rule points; ``applied_total`` is that sum\ncapped at 100. ``capped`` is true only when the cap changed the total."
+      },
+      "ScreenshotReference": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 12000,
+            "title": "Url"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "capture"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "ScreenshotReference"
+      },
+      "ServiceStatus": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "degraded"
+        ],
+        "title": "ServiceStatus",
+        "description": "Coarse health of the API process."
+      },
+      "Severity": {
+        "type": "string",
+        "enum": [
+          "info",
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ],
+        "title": "Severity",
+        "description": "How strongly a single signal should draw the user's attention."
+      },
+      "Signal": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{1,63}$",
+            "title": "Code",
+            "description": "Stable machine-readable identifier for the rule or check."
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "description": "Short human-readable label."
+          },
+          "explanation": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Explanation",
+            "description": "Why the evidence matters, without claiming proven fraud."
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "source": {
+            "$ref": "#/components/schemas/EvidenceSource"
+          },
+          "evidence": {
+            "items": {
+              "type": "string",
+              "maxLength": 500,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Evidence",
+            "description": "Concrete observations supporting the signal. For text rules these are exact excerpts of the submitted message."
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleProvenance"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Provenance of the rule, when the signal came from one."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "title",
+          "explanation",
+          "severity",
+          "source"
+        ],
+        "title": "Signal",
+        "description": "One evidence-backed finding produced by a deterministic rule or decoder."
+      },
+      "TextAnalysisRequest": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "text",
+            "title": "Type",
+            "description": "Input kind. Only ``text`` is supported."
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Content",
+            "description": "Message text to analyse, 1-5000 characters."
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 35,
+            "minLength": 2,
+            "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$",
+            "title": "Language",
+            "description": "Language tag of the message, e.g. ``en`` or ``en-IN``."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "content",
+          "language"
+        ],
+        "title": "TextAnalysisRequest",
+        "description": "Request body for ``POST /api/v1/analyze``.\n\nOnly plain text is analysed in this version. ``language`` is a BCP 47-style\ntag (``en``, ``en-IN``, ``hi``); the rule baseline is English-first."
+      },
+      "TextAnalysisResponse": {
+        "properties": {
+          "scan_id": {
+            "type": "string",
+            "pattern": "^scan_[0-9a-f]{32}$",
+            "title": "Scan Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "text",
+            "title": "Type"
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 35,
+            "minLength": 2,
+            "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$",
+            "title": "Language"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AnalysisStatus"
+          },
+          "analyzed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Analyzed At"
+          },
+          "risk_score": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Risk Score"
+          },
+          "risk_level": {
+            "$ref": "#/components/schemas/RiskLevel"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ScamCategory"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Summary"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/Signal"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Signals"
+          },
+          "recommended_actions": {
+            "items": {
+              "$ref": "#/components/schemas/RecommendedAction"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Recommended Actions"
+          },
+          "limitations": {
+            "$ref": "#/components/schemas/AnalysisLimitations"
+          },
+          "scoring": {
+            "$ref": "#/components/schemas/ScoringBreakdown"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scan_id",
+          "type",
+          "language",
+          "status",
+          "analyzed_at",
+          "risk_score",
+          "risk_level",
+          "category",
+          "summary",
+          "limitations",
+          "scoring"
+        ],
+        "title": "TextAnalysisResponse",
+        "description": "Response body for ``POST /api/v1/analyze``.\n\nThe submitted message itself is not echoed back. ``scan_id`` identifies\nthis analysis run only; nothing is stored server-side."
+      },
+      "TransactionInput": {
+        "properties": {
+          "network": {
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "sepolia",
+              "arbitrum"
+            ],
+            "title": "Network"
+          },
+          "sender": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Sender"
+          },
+          "target": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Target"
+          },
+          "calldata": {
+            "type": "string",
+            "maxLength": 200000,
+            "pattern": "^0x(?:[0-9a-fA-F]{2}){4,}$",
+            "title": "Calldata"
+          },
+          "valueWei": {
+            "type": "string",
+            "maxLength": 78,
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "title": "Valuewei",
+            "default": "0"
+          },
+          "claimedPurpose": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Claimedpurpose",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "network",
+          "sender",
+          "target",
+          "calldata"
+        ],
+        "title": "TransactionInput"
+      },
+      "TransactionResult": {
+        "properties": {
+          "demo": {
+            "type": "boolean",
+            "title": "Demo",
+            "default": false
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "sepolia",
+              "arbitrum"
+            ],
+            "title": "Network"
+          },
+          "sender": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Sender"
+          },
+          "target": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Target"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "successful",
+              "reverted",
+              "unsupported",
+              "failed",
+              "inconclusive"
+            ],
+            "title": "Status"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Checkedat"
+          },
+          "functionName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Functionname"
+          },
+          "parameters": {
+            "items": {
+              "$ref": "#/components/schemas/Parameter"
+            },
+            "type": "array",
+            "title": "Parameters"
+          },
+          "effects": {
+            "items": {
+              "$ref": "#/components/schemas/Effect"
+            },
+            "type": "array",
+            "title": "Effects"
+          },
+          "expectedAction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expectedaction"
+          },
+          "actualAction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actualaction"
+          },
+          "mismatches": {
+            "items": {
+              "$ref": "#/components/schemas/Mismatch"
+            },
+            "type": "array",
+            "title": "Mismatches"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "network",
+          "sender",
+          "target",
+          "status",
+          "checkedAt"
+        ],
+        "title": "TransactionResult"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Viewport": {
+        "properties": {
+          "width": {
+            "type": "integer",
+            "maximum": 16000.0,
+            "minimum": 1.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "maximum": 16000.0,
+            "minimum": 1.0,
+            "title": "Height"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "width",
+          "height"
+        ],
+        "title": "Viewport"
+      },
+      "WalletAnalysis": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo",
+            "default": false
+          },
+          "wallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Wallet"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "sepolia",
+              "arbitrum"
+            ],
+            "title": "Network"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "partial",
+              "unsupported",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Checkedat"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            },
+            "type": "array",
+            "title": "Permissions"
+          },
+          "graph": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Graph"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/CoverageReport"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          },
+          "findings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "wallet",
+          "network",
+          "status",
+          "checkedAt",
+          "coverage",
+          "limitations"
+        ],
+        "title": "WalletAnalysis"
+      },
+      "WalletRequest": {
+        "properties": {
+          "wallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Wallet"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "sepolia",
+              "arbitrum"
+            ],
+            "title": "Network"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "wallet",
+          "network"
+        ],
+        "title": "WalletRequest"
+      }
+    }
+  }
+}
