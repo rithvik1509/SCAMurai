@@ -50,6 +50,7 @@ _DANGEROUS_SCHEME_RE = re.compile(
     r"(?i)\b(?:javascript|vbscript|data|file)\s*:[^\s<>\"']+",
 )
 _PERCENT_ESCAPE_RE = re.compile(r"%[0-9A-Fa-f]{2}")
+_DOUBLE_ENCODED_RE = re.compile(r"%25[0-9A-Fa-f]{2}")
 
 _PATH_TERM_RE = re.compile(
     r"(?i)(?<![a-z0-9])("
@@ -434,6 +435,8 @@ def _trim(raw: str) -> str:
     while raw and raw[-1] in _TRAILING_PUNCTUATION:
         if raw[-1] == ")" and raw.count("(") >= raw.count(")"):
             break
+        if raw[-1] == "]" and raw.count("[") >= raw.count("]"):
+            break
         raw = raw[:-1]
     return raw
 
@@ -465,8 +468,9 @@ def extract_urls(content: str) -> list[URLToken]:
 
 
 def _parse(raw: str):
-    candidate = raw if "://" in raw else f"//{raw}"
-    return urlsplit(candidate)
+    if "://" in raw or raw.startswith("//"):
+        return urlsplit(raw)
+    return urlsplit(f"//{raw}")
 
 
 def _is_ip(host: str) -> bool:
@@ -518,9 +522,9 @@ def _is_misleading_host(host: str) -> bool:
         parts = _BRAND_PART_RE.findall(label)
         if any(term in parts for term in _SENSITIVE_SUBDOMAIN_TERMS):
             if (
-                len(labels) >= 4
-                or "-" in label
+                "-" in label
                 or tld in _SUSPICIOUS_TLDS
+                or len(labels) >= 5
             ):
                 return True
 
@@ -688,7 +692,11 @@ def analyze_urls(
             _add_evidence(evidence, "url_unusually_long", raw)
 
         escapes = len(_PERCENT_ESCAPE_RE.findall(raw))
-        if escapes >= 6 or "%00" in raw.lower() or "%25" in raw.lower():
+        if (
+            escapes >= 6
+            or "%00" in raw.lower()
+            or _DOUBLE_ENCODED_RE.search(raw)
+        ):
             _add_evidence(evidence, "url_obfuscated", raw)
 
         terms = _sensitive_path_terms(parts)
@@ -700,11 +708,18 @@ def analyze_urls(
             _add_evidence(evidence, "url_embedded_redirect", raw)
 
     for match in _DANGEROUS_SCHEME_RE.finditer(content):
-        _add_evidence(evidence, "url_dangerous_scheme", match.group(0))
+        _add_evidence(
+            evidence,
+            "url_dangerous_scheme",
+            _trim(match.group(0)),
+        )
         inspected += 1
 
     text_codes = {finding.signal.code for finding in text_findings}
-    corroborated = any(
+    # Discount only when *every* theme in the link path is already evidenced
+    # by text. A different theme (for example a KYC sentence beside an /otp
+    # path) is still a distinct indicator and keeps its points.
+    corroborated = bool(path_themes) and all(
         text_codes & _TEXT_CORROBORATION[theme] for theme in path_themes
     )
 

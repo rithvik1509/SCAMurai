@@ -5,10 +5,11 @@ what a message promises, what action it requests, and what a decoded financial
 instruction authorizes. It presents risk indicators and evidence, never a claim
 that fraud or theft is proven.
 
-> **Current scope:** `GET /health` and deterministic text analysis at
-> `POST /api/v1/analyze` are implemented, along with configuration, CORS,
-> request-size limits, centralized error handling, shared schemas, and tests.
-> The crypto, intent, and rescue endpoints are **not implemented yet** — see
+> **Current scope:** `GET /health` and deterministic text plus static link
+> analysis at `POST /api/v1/analyze` are implemented, along with configuration,
+> CORS, request-size limits, centralized error handling, shared schemas, and
+> tests. Links are parsed but never opened, resolved, or fetched. The crypto,
+> intent, and rescue endpoints are **not implemented yet** — see
 > [Scope](#scope).
 
 ## Requirements
@@ -69,10 +70,24 @@ curl -s http://127.0.0.1:8000/api/v1/analyze \
   }'
 ```
 
+Links in the message are inspected statically as part of the same request:
+
+```bash
+curl -s http://127.0.0.1:8000/api/v1/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "type": "text",
+    "content": "URGENT: Complete KYC at http://192.168.1.10/kyc-update",
+    "language": "en"
+  }'
+```
+
 The response includes a `scan_id`, a 0-100 `risk_score` with its arithmetic,
-`signals` quoting exact excerpts, recommended actions, and limitations. The
-rule baseline is deterministic and makes no network, LLM, or database call.
-See [docs/api-contract.md](docs/api-contract.md) for the full contract.
+`signals` quoting exact excerpts, recommended actions, and limitations. Text
+and link findings are combined into one score; a link-path finding that only
+corroborates a text finding contributes `0` instead of counting twice. The
+rule baseline is deterministic and makes no network, DNS, LLM, or database
+call. See [docs/api-contract.md](docs/api-contract.md) for the full contract.
 
 ## Test
 
@@ -127,6 +142,7 @@ backend/
   models/schemas.py          # shared Pydantic v2 schemas
   services/
     scam_detector.py         # text rule baseline + exact-excerpt evidence
+    url_analyzer.py          # static link extraction/structure; no fetching
     risk_engine.py           # capped 0-100 scoring and risk levels
     advice_engine.py         # summary, limitations, recommended actions
     (other modules reserved for later endpoints)
@@ -152,9 +168,10 @@ backend/
   with a plain 400 before routing.)
 - **Minimal logging.** Requests log method, path, status, duration, and request
   id only — never message bodies or query strings.
-- **No outbound calls.** The service makes no network requests, never fetches
-  user-submitted URLs, and stores no submitted content. Text analysis is
-  fully deterministic.
+- **No outbound calls.** The service makes no network requests, never fetches,
+  resolves, pings, or crawls user-submitted URLs, and stores no submitted
+  content. Link analysis is purely lexical (URL parsing and hostname/path
+  checks). Text and link analysis are fully deterministic.
 - **No signing or execution.** The backend never signs, broadcasts, or executes
   transactions and never collects private keys, seed phrases, or OTPs.
 
@@ -165,8 +182,11 @@ Implemented:
 - `GET /health`
 - `POST /api/v1/analyze` — deterministic text analysis for urgency, bank/KYC,
   OTP, government, crypto-reward, payment-demand, and guaranteed-return
-  indicators, with exact-excerpt evidence, rule provenance, capped 0-100
-  scoring, recommended actions, and limitations
+  indicators, plus static link analysis for IP hosts, `@` user-information
+  tricks, punycode, misleading subdomains, sensitive paths, malformed or
+  encoded links, embedded redirects, and dangerous schemes; with
+  exact-excerpt evidence, rule provenance, capped 0-100 scoring, recommended
+  actions, and limitations
 - request-size limits, CORS, request ids, centralized error handling
 - shared schemas, settings validation, tests, API contract documentation
 
@@ -177,8 +197,8 @@ Reserved for later steps (currently **not registered**, so requests return
 - `POST /api/v1/intent/compare`
 - `POST /api/v1/rescue`
 
-No URL reputation checks, calldata decoding, intent comparison, or rescue
-guidance exist yet. LLM integration is optional and absent by design; the
-deterministic baseline works without one.
+No URL fetching, DNS resolution, domain-reputation lookup, calldata decoding,
+intent comparison, or rescue guidance exists yet. LLM integration is optional
+and absent by design; the deterministic baseline works without one.
 
 See [docs/api-contract.md](docs/api-contract.md) for request/response details.

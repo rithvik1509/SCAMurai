@@ -1,12 +1,13 @@
 # SCAMurai API contract
 
-**Version:** 0.1.0 (text analysis)
+**Version:** 0.1.0 (text and static link analysis)
 **Base URL (local):** `http://127.0.0.1:8000`
 **Content type:** `application/json`
 
 This document reflects what is implemented **today**. `GET /health` and
-`POST /api/v1/analyze` are live. The crypto, intent, and rescue endpoints are
-reserved; see [Reserved endpoints](#reserved-endpoints).
+`POST /api/v1/analyze` are live; the latter combines message-text rules with
+static link inspection. The crypto, intent, and rescue endpoints are reserved;
+see [Reserved endpoints](#reserved-endpoints).
 
 ---
 
@@ -21,9 +22,11 @@ reserved; see [Reserved endpoints](#reserved-endpoints).
 - The server never claims that fraud or theft is proven, and no endpoint
   returns a random or pseudo-probabilistic risk score.
 - Limitation notes are part of an analysis response, not optional decoration.
-- Text analysis is deterministic: the same input always produces the same
-  score, category, signals, evidence, and ordering. Only `scan_id` and
-  `analyzed_at` differ between identical requests.
+- Text and link analysis are deterministic: the same input always produces
+  the same score, category, signals, evidence, and ordering. Only `scan_id`
+  and `analyzed_at` differ between identical requests.
+- Links are inspected **statically only**. No URL is opened, fetched,
+  resolved, pinged, crawled, or looked up in a reputation service.
 
 ---
 
@@ -64,9 +67,11 @@ X-Request-ID: 3f2a1c9d8b7e4a6c9f0d2e5a1b3c4d6e
 ## `POST /api/v1/analyze`
 
 Analyses a plain-text message with a fixed, deterministic rule baseline
-(`scam_text_rules` v1.0.0). Each signal quotes exact excerpts of the submitted
-text. The endpoint makes no network request, uses no LLM or database, stores
-nothing, and does not echo the whole message back.
+(`scam_text_rules` v1.0.0) and inspects any links it contains with a static
+link baseline (`url_static_rules` v1.0.0). Both sources feed one signal list
+and one risk score. Each signal quotes exact excerpts of the submitted text.
+The endpoint makes no network request, uses no LLM or database, stores nothing,
+and does not echo the whole message back.
 
 ### Request
 
@@ -81,7 +86,7 @@ nothing, and does not echo the whole message back.
 | Field | Type | Rules |
 |---|---|---|
 | `type` | string | Must be exactly `"text"`. Other input kinds are not implemented. |
-| `content` | string | 1–5000 characters after trimming; whitespace-only is rejected. |
+| `content` | string | 1–5000 characters after trimming; whitespace-only is rejected. A message, a single link, or text containing several links are all accepted. |
 | `language` | string | BCP 47-style tag: 2–3 letter primary subtag plus optional `-` subtags, e.g. `en`, `en-IN`, `hi`. Normalized to lower case. |
 
 Validation is strict: unknown fields are rejected and values are not coerced
@@ -175,7 +180,7 @@ an oversized body receives `413 payload_too_large` before routing.
   ],
   "limitations": {
     "notes": [
-      "This analysis inspects the message text only. It does not verify the sender, fetch links, inspect attachments, or confirm that any organization named in the message is genuine.",
+      "This analysis inspects only the submitted text and any links inside it. It does not verify the sender, fetch links, inspect attachments, or confirm that any organization named in the message is genuine.",
       "The risk score reflects matches against a fixed rule list. It is not a probability and cannot prove that a message is fraudulent or that it is safe."
     ]
   },
@@ -227,19 +232,29 @@ shown exactly as returned.
 | `risk_level` | `RiskLevel` | `low`, `moderate`, `high`, `critical` for this endpoint |
 | `category` | `ScamCategory` | Category of the highest-weight finding, or `none` |
 | `summary` | string | Deterministic, non-accusatory summary |
-| `signals` | `Signal[]` | Ordered by descending points, then fixed precedence |
+| `signals` | `Signal[]` | Text and link findings, ordered by descending points, then fixed precedence |
 | `recommended_actions` | `RecommendedAction[]` | Ordered by ascending priority, deduplicated, ≤ 10 |
 | `limitations` | `AnalysisLimitations` | Always present |
 | `scoring` | `ScoringBreakdown` | Shows the arithmetic behind `risk_score` |
 
 ---
 
-## Detection rules
+## Text detection rules
 
-Rules are regular-expression checks with a negation guard. If a negation such
-as "never", "do not", "avoid", or "without" appears in the clause before a
-match or inside the matched excerpt, the rule is skipped. This prevents an
-advisory like "Never share your OTP" from being reported as an OTP request.
+Rules are regular-expression checks with three conservative guards:
+
+- **Negation.** If "never", "do not", "avoid", or "without" appears in the
+  clause before a match or inside the excerpt, the rule is skipped. "Never
+  share your OTP" is therefore not an OTP request.
+- **Educational context.** A match preceded by "scammers", "fraudsters",
+  "phishing", "how to", "guide", or a hypothetical such as "if someone asks
+  you to…" is treated as describing a scam, not performing one.
+- **Benign context.** A small number of rules ignore documented phrasing such
+  as "at your request" or "I will pay…" so ordinary conversation is not
+  reported as a demand.
+
+Text matching excludes URL spans, so a path such as `/kyc-update` is handled
+by link analysis rather than being counted again as message text.
 
 Each rule contributes **at most one signal** per request, regardless of how
 many times it matches.
@@ -247,16 +262,16 @@ many times it matches.
 | Rule id | Category | Severity | Points | Detects |
 |---|---|---|---|---|
 | `urgency_pressure` | `urgency_pressure` | medium | 12 | Urgency words, short deadlines, "last chance", "expires today" |
-| `bank_account_threat` | `bank_kyc_impersonation` | high | 22 | Account/card "will be blocked", suspended, frozen, closed |
-| `kyc_update_demand` | `bank_kyc_impersonation` | high | 20 | KYC/PAN/Aadhaar update, verification, linking, expiry |
-| `otp_disclosure_request` | `otp_theft` | critical | 32 | OTP/verification code paired with share, send, tell, forward, read, disclose |
-| `government_agency_impersonation` | `government_impersonation` | high | 22 | Agency claim (income tax, CBI, police, customs, …) paired with a case, notice, arrest, penalty, or demand |
-| `legal_action_threat` | `government_impersonation` | high | 18 | Arrest warrant, legal action, prosecution, court notice, registered case |
-| `crypto_reward_claim` | `crypto_reward` | high | 24 | Free crypto/reward/airdrop, connect wallet, double your crypto |
+| `bank_account_threat` | `bank_kyc_impersonation` | high | 22 | Account/card blocked, suspended, frozen, locked, restricted, closed |
+| `kyc_update_demand` | `bank_kyc_impersonation` | high | 20 | KYC/PAN/Aadhaar update, verification, linking, disclosure, expiry |
+| `otp_disclosure_request` | `otp_theft` | critical | 32 | OTP/verification code paired with share, send, tell, forward, read, disclose (including a "Share it" follow-up sentence) |
+| `government_agency_impersonation` | `government_impersonation` | high | 22 | Agency claim (income tax, CBI, police, customs, …) or claimed officer, paired with a case, notice, arrest, penalty, or demand |
+| `legal_action_threat` | `government_impersonation` | high | 18 | Arrest warrant, legal action, prosecution, court notice, registered case, filed FIR/complaint |
+| `crypto_reward_claim` | `crypto_reward` | high | 24 | Free crypto/reward/airdrop/NFT, connect wallet, double your crypto |
 | `seed_phrase_request` | `crypto_reward` | critical | 40 | Seed/recovery phrase or private key paired with a disclosure request |
-| `payment_demand` | `payment_demand` | high | 20 | Upfront/processing fee, money transfer, gift card, crypto/UPI payment, payment link, QR |
+| `payment_demand` | `payment_demand` | high | 20 | Upfront/processing fee, money transfer, gift card purchase, crypto/UPI payment, payment link, QR |
 | `guaranteed_returns` | `investment_scheme` | high | 26 | Guaranteed, assured, fixed, or risk-free returns; double your money |
-| `unrealistic_return_rate` | `investment_scheme` | high | 22 | High percentage returns, "X% in N days", large daily payouts |
+| `unrealistic_return_rate` | `investment_scheme` | high | 22 | Percentage returns (1–4 digits), "X% in N days", guaranteed daily/weekly earnings |
 
 Evidence rules:
 
@@ -269,17 +284,135 @@ Evidence rules:
 
 ---
 
+## Static link analysis
+
+The endpoint extracts links from `content` and inspects their structure only.
+Supported forms are:
+
+- absolute `http://` and `https://` URLs;
+- `www.` hostnames;
+- bare hostnames with a 2–24 letter alphabetic TLD, optional port and path,
+  for example `example.com/login`; an IP host normally arrives with a
+  scheme, for example `http://192.168.1.10:8080/admin`;
+- `javascript:`, `vbscript:`, `data:`, and `file:` schemes for the dangerous
+  scheme check.
+
+Email addresses (`user@example.com`) are not extracted as links. Overlapping
+matches are merged, duplicates are collapsed, and at most **10 unique links**
+are analysed per request. Additional links are not inspected, and a limitation
+note says so. Text evidence continues to be evaluated across the whole
+message.
+
+| Rule id | Severity | Points | Detects |
+|---|---|---|---|
+| `url_dangerous_scheme` | high | 20 | `javascript:`, `vbscript:`, `data:`, or `file:` link schemes |
+| `url_at_userinfo` | high | 20 | An `@` in the authority, where the text before `@` is user information rather than the host |
+| `url_ip_host` | high | 18 | IPv4/IPv6 address used as the host |
+| `url_punycode_host` | high | 18 | Any hostname label beginning with `xn--` |
+| `url_misleading_host` | high | 16 | Brand-like label in a subdomain; or a security-related subdomain label that is hyphenated, sits under a suspicious TLD, or appears in a five-plus-label host |
+| `url_sensitive_path` | medium | 14 (or 0 when corroborated) | OTP, one-time-password, verification-code, verify-account, KYC, Aadhaar, PAN, wallet, seed, mnemonic, private-key, unlock, reactivate, claim, airdrop, reward, bonus, or giveaway in the path/query |
+| `url_malformed` | medium | 10 | Missing host, invalid port, invalid numeric IPv4, or single-label non-local host |
+| `url_obfuscated` | medium | 10 | Six or more percent-escapes, `%00`, or double-encoded `%25xx` |
+| `url_embedded_redirect` | medium | 10 | A redirect-style query parameter containing a different absolute URL |
+| `url_insecure_scheme` | low | 6 | Explicit `http://` rather than `https://` |
+| `url_unusually_long` | low | 6 | Raw link longer than 200 characters |
+
+Link evidence is the raw extracted link, clipped to 300 characters. Each URL
+rule contributes at most one signal, with at most 5 links as evidence. Link
+signals use `source: "url_static"`, category `suspicious_url`, and provenance
+`rule_set: "url_static_rules"`, `version: "1.0.0"`.
+
+### Combining text and link findings
+
+Text rules do not inspect URL spans. When **every** credential, KYC, wallet,
+or account theme in a link path is already evidenced by a related text rule,
+the link signal is still reported for transparency but contributes **0**
+points. A different theme in the same path keeps its points because it is a
+distinct indicator. This is the only cross-source discount and prevents the
+same theme from being counted twice. `scoring.contributions` includes that
+0-point entry.
+
+A link indicator is not proof that a link is malicious. The API does not claim
+to verify a domain's ownership, reputation, destination, or legitimacy, and it
+does not claim that one suspicious trait means fraud.
+
+### Link-only example
+
+Request:
+
+```json
+{
+  "type": "text",
+  "content": "https://paypal.com.security-check.xyz/otp",
+  "language": "en"
+}
+```
+
+Response excerpt (omitting `scan_id`, `analyzed_at`, advice, and limitations):
+
+```json
+{
+  "type": "text",
+  "language": "en",
+  "status": "completed",
+  "risk_score": 30,
+  "risk_level": "moderate",
+  "category": "suspicious_url",
+  "signals": [
+    {
+      "code": "url_misleading_host",
+      "title": "Link has a misleading hostname structure",
+      "explanation": "A brand-like or security-related label appears in a subdomain, or the host is unusually deep. Subdomains are easy to create and do not establish who owns or operates the destination. Ownership was not verified.",
+      "severity": "high",
+      "source": "url_static",
+      "evidence": ["https://paypal.com.security-check.xyz/otp"],
+      "rule": {
+        "rule_id": "url_misleading_host",
+        "rule_set": "url_static_rules",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "code": "url_sensitive_path",
+      "title": "Link path contains credential or reward terms",
+      "explanation": "The URL path or query mentions OTP, KYC, identity, wallet, or reward terms. Legitimate services also use such paths, so this is a review indicator, not proof. The page behind the link was not opened.",
+      "severity": "medium",
+      "source": "url_static",
+      "evidence": ["https://paypal.com.security-check.xyz/otp"],
+      "rule": {
+        "rule_id": "url_sensitive_path",
+        "rule_set": "url_static_rules",
+        "version": "1.0.0"
+      }
+    }
+  ],
+  "scoring": {
+    "method": "weighted_rule_sum",
+    "raw_total": 30,
+    "applied_total": 30,
+    "capped": false,
+    "contributions": [
+      {"code": "url_misleading_host", "category": "suspicious_url", "points": 16},
+      {"code": "url_sensitive_path", "category": "suspicious_url", "points": 14}
+    ]
+  }
+}
+```
+
+---
+
 ## Risk scoring
 
 ```
-raw_total = sum(points of each matched rule)      # each rule at most once
+raw_total = sum(points of each matched text or link rule)   # each rule once
 risk_score = min(100, raw_total)
 ```
 
 `scoring.raw_total` is the uncapped sum, `scoring.applied_total` equals
 `risk_score`, and `scoring.capped` is true only when the cap changed the
 total. `scoring.contributions` lists every matched rule and its points in the
-same order as `signals`.
+same order as `signals`. A corroborating `url_sensitive_path` appears with
+`points: 0`.
 
 | `risk_score` range | `risk_level` |
 |---|---|
@@ -294,7 +427,7 @@ resolved by this fixed order, earlier first:
 ```
 otp_theft > crypto_reward > bank_kyc_impersonation >
 government_impersonation > payment_demand > investment_scheme >
-urgency_pressure
+urgency_pressure > suspicious_url
 ```
 
 If no rule matches, `risk_score` is `0`, `risk_level` is `low`, `category` is
@@ -311,16 +444,21 @@ not certify a message as legitimate, which is stated in `limitations`.
 ## Analysis status and limitations
 
 `status` is `completed` when the declared language has an English primary
-subtag (`en`, `en-IN`, …). For other declared languages the rules still run,
-but `status` is `partial` and `limitations.notes` says coverage may be
-incomplete because the baseline is English-first.
+subtag (`en`, `en-IN`, …). For other declared languages the text and link
+rules still run, but `status` is `partial` and `limitations.notes` says
+coverage may be incomplete because the baseline is English-first.
 
 Every response includes the first two notes below; the remaining notes appear
 when their condition applies:
 
-- analysis is text-only: the sender is not verified, links are not fetched,
-  attachments are not inspected, and named organizations are not confirmed;
+- the analysis sees only the submitted text and links inside it: the sender
+  is not verified, links are not fetched, attachments are not inspected, and
+  named organizations are not confirmed;
 - the score is an indicator derived from a fixed rule list, not a probability;
+- when links are present, the count inspected is reported, together with the
+  statement that no URL was opened, resolved, crawled, or fetched and that no
+  ownership or reputation check was made;
+- when more than 10 unique links are present, only the first 10 were analysed;
 - for short messages, limited context may hide indicators;
 - when no rule matches, that does **not** guarantee the message is legitimate.
 
@@ -390,7 +528,7 @@ is deliberately excluded because messages can contain sensitive text.
 | `AnalysisStatus` | `completed`, `partial` | How complete an analysis is |
 | `Severity` | `info`, `low`, `medium`, `high`, `critical` | Strength of one signal |
 | `RiskLevel` | `unknown`, `low`, `moderate`, `high`, `critical` | Rule-derived aggregate indicator; `unknown` means evidence is insufficient |
-| `ScamCategory` | `none`, `urgency_pressure`, `bank_kyc_impersonation`, `otp_theft`, `government_impersonation`, `crypto_reward`, `payment_demand`, `investment_scheme` | Message-pattern family |
+| `ScamCategory` | `none`, `urgency_pressure`, `bank_kyc_impersonation`, `otp_theft`, `government_impersonation`, `crypto_reward`, `payment_demand`, `investment_scheme`, `suspicious_url` | Message-pattern or link-structure family |
 | `EvidenceSource` | `message_text`, `url_static`, `decoded_calldata`, `trusted_metadata`, `user_context`, `model_output` | Provenance of facts |
 
 `RiskLevel` describes **indicators**, not proof. An unlimited approval, for
@@ -470,7 +608,7 @@ One evidence-backed finding. A signal is not proof of fraud.
 | `raw_total` | integer | ≥ 0 |
 | `applied_total` | integer | 0–100 |
 | `capped` | boolean | True when `raw_total > 100` |
-| `contributions` | `ScoreContribution[]` | ≤ 50, each `points` 1–100 |
+| `contributions` | `ScoreContribution[]` | ≤ 50, each `points` 0–100; 0 marks a corroborating link-path finding |
 
 ### `RecommendedAction`
 
@@ -490,7 +628,7 @@ non-executing and never ask for private keys, seed phrases, or OTPs.
 ```json
 {
   "notes": [
-    "This analysis inspects the message text only. It does not verify the sender, fetch links, inspect attachments, or confirm that any organization named in the message is genuine.",
+    "This analysis inspects only the submitted text and any links inside it. It does not verify the sender, fetch links, inspect attachments, or confirm that any organization named in the message is genuine.",
     "The risk score reflects matches against a fixed rule list. It is not a probability and cannot prove that a message is fraudulent or that it is safe."
   ]
 }
@@ -516,9 +654,10 @@ unverified URLs, and undecoded calldata must be reported here.
   wildcard is rejected at startup. Credentials are enabled only for those
   explicit origins. Allowed methods: `GET`, `POST`, `OPTIONS`. Exposed header:
   `X-Request-ID`.
-- **No outbound calls.** Text analysis never fetches user-submitted URLs and
-  makes no reputation lookup. Adding any outbound call requires a separate,
-  bounded design with configured timeouts.
+- **No outbound calls.** Link analysis parses text only. It never fetches,
+  opens, resolves, pings, or crawls a user-submitted URL, performs no DNS
+  lookup, and makes no reputation lookup. Adding any outbound call requires a
+  separate, bounded design with configured timeouts.
 - **No storage.** The submitted message is not persisted and is not written to
   logs; request logs contain only method, path, status, duration, and request
   id.

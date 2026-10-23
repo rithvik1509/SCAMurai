@@ -50,13 +50,15 @@ _NEGATION = re.compile(
 #: match, so a genuine demand in a later sentence is still reported.
 _EDUCATIONAL = re.compile(
     r"\b(?:scammers?|fraudsters?|phishing|advisory|awareness|educational|"
-    r"tutorial)\b",
+    r"tutorial|how to|guide|steps to|learn|explains?|explained)\b",
     re.IGNORECASE,
 )
 _HYPOTHETICAL = re.compile(
-    r"\b(?:if|when)\b[^.!?\n]{0,60}\b(?:someone|anyone|a scammer|"
-    r"scammers|fraudsters?|they)\b[^.!?\n]{0,40}\b(?:ask|asks|asked|"
-    r"tell|tells|told|request|requests|try|tries|attempt|attempts)\b",
+    r"\b(?:if|when)\b[^.!?\n]{0,60}?\b(?:someone|anyone|a scammer|"
+    r"scammers|fraudsters?|they)\b[^.!?\n]{0,40}?\b(?:ask|asks|asked|"
+    r"tell|tells|told|request|requests|try|tries|attempt|attempts)\b|"
+    r"\b(?:if|when)\s+you\s+(?:are|were)\s+(?:asked|told|instructed|"
+    r"requested)\b",
     re.IGNORECASE,
 )
 #: Common benign first-person phrasing for payment rules.
@@ -151,8 +153,6 @@ RULES: tuple[ScamRule, ...] = (
         points=22,
         patterns=_compile(
             r"\b(?:account|card|net\s?banking)\b[^.\n]{0,60}?\b"
-            r"(?:will be|has been|have been|is being|is|are|was|were|"
-            r"would be|may be|can be)\s+"
             r"(?:blocked|suspended|frozen|deactivated|closed|terminated|"
             r"locked|restricted)\b",
             r"\b(?:block|suspend|freeze|deactivate|close|terminate|lock|"
@@ -180,8 +180,8 @@ RULES: tuple[ScamRule, ...] = (
         patterns=_compile(
             r"\b(?:kyc|know your customer)\b[^.\n]{0,80}?\b"
             r"(?:update|updation|verify|verification|complete|completion|"
-            r"pending|expire|expired|suspend|block|link|linked|re-?kyc|"
-            r"re-?do|submit)\b",
+            r"pending|expire|expired|suspend|suspended|block|blocked|"
+            r"link|linked|re-?kyc|re-?do|submit)\b",
             r"\b(?:update|verify|complete|submit|link|re-?do|share|send|"
             r"provide)\b[^.\n]{0,60}?\b(?:kyc|know your customer)\b",
             r"\b(?:pan|aadhaar|aadhar)\b[^.\n]{0,60}?\b"
@@ -218,6 +218,12 @@ RULES: tuple[ScamRule, ...] = (
             r"login code|(?:6|six)[ -]?digit(?: verification)? code|"
             r"code (?:sent|delivered|received) (?:to|on) your "
             r"(?:phone|mobile))\b",
+            r"\b(?:otp|one[ -]?time (?:password|code|pin)|"
+            r"verification code|security code|authentication code|2fa code|"
+            r"login code|(?:6|six)[ -]?digit(?: verification)? code)\b"
+            r"[^.\n]{0,40}?[.\n]\s*(?:please\s+)?(?:share|send|tell|"
+            r"forward|read|provide|give|quote|disclose)\s+"
+            r"(?:it|the code|this code)\b",
         ),
     ),
     ScamRule(
@@ -246,8 +252,8 @@ RULES: tuple[ScamRule, ...] = (
             r"enforcement directorate|government of india|"
             r"social security administration|passport office|trai|sebi)\b"
             r"[^.\n]{0,80}?\b(?:case|notice|warrant|arrest|fine|penalty|"
-            r"verify|suspend|block|pay|legal action|fir|complaint|officer|"
-            r"investigation)\b",
+            r"verify|suspend|suspended|block|blocked|pay|legal action|fir|"
+            r"complaint|officer|investigation)\b",
             r"\b(?:case|notice|warrant|arrest|fine|penalty|legal action|fir|"
             r"investigation|complaint)\b[^.\n]{0,80}?\b(?:income tax|irs|cbi|"
             r"fbi|cyber ?crime|police|customs|enforcement directorate|"
@@ -287,21 +293,21 @@ RULES: tuple[ScamRule, ...] = (
     ScamRule(
         code="crypto_reward_claim",
         category=ScamCategory.CRYPTO_REWARD,
-        title="Unsolicited crypto reward or giveaway",
+        title="Unsolicited crypto reward or wallet-connection request",
         explanation=(
-            "The message offers free crypto, a reward, or an airdrop and "
-            "often asks you to connect a wallet. Unexpected crypto rewards "
-            "are a common way to obtain wallet approvals or signatures."
+            "The message offers free crypto, a reward, or an airdrop, or asks "
+            "you to connect a wallet. Unexpected rewards and wallet "
+            "connections are a common way to obtain approvals or signatures."
         ),
         severity=Severity.HIGH,
         points=24,
         patterns=_compile(
             r"\b(?:free|claim|bonus|reward|airdrop|giveaway|gift|won|win)\b"
             r"[^.\n]{0,60}?\b(?:btc|bitcoin|eth|ethereum|usdt|usdc|"
-            r"crypto(?:currency)?|tokens?|wallet|coins?)\b",
+            r"crypto(?:currency)?|tokens?|wallet|coins?|nfts?)\b",
             r"\b(?:btc|bitcoin|eth|ethereum|usdt|usdc|crypto(?:currency)?|"
-            r"tokens?|coins?)\b[^.\n]{0,60}?\b(?:airdrop|giveaway|free|reward|"
-            r"bonus|claim)\b",
+            r"tokens?|coins?|nfts?)\b[^.\n]{0,60}?\b(?:airdrop|giveaway|"
+            r"free|reward|bonus|claim)\b",
             r"\b(?:connect|link|sync|validate)\s+(?:your\s+)?"
             r"(?:crypto\s+)?wallet\b",
             r"\b(?:double|triple)\s+your\s+"
@@ -362,14 +368,16 @@ RULES: tuple[ScamRule, ...] = (
             r"\b(?:send|transfer|pay)\s+(?:me|us)\b[^.\n]{0,15}"
             r"(?:₹|rs\.?|inr|\$|usd)\s?\d[\d,]*(?:\.\d{1,2})?",
             r"\b(?:processing|registration|service|verification|release|"
-            r"clearance|customs|administrative|handling)\s+fees?\b",
+            r"clearance|customs|administrative|handling)\s+fees?\s+"
+            r"(?:is|are)\s+(?:required|mandatory|payable|non-refundable)\b",
+            r"\b(?:buy|purchase)\s+gift\s?cards?\b",
             r"\b(?:advance|upfront|security)\s+"
             r"(?:payment|deposit|fee)\b",
             r"\b(?:make|complete)\s+(?:the\s+)?payment\b",
             r"\b(?:pay|send|transfer|deposit)\b[^.\n]{0,25}?"
             r"(?:₹|rs\.?|inr|\$|usd)\s?\d[\d,]*(?:\.\d{1,2})?",
             r"\b(?:gift\s?cards?|western union|moneygram)\b"
-            r"[^.\n]{0,40}?\b(?:pay|send|transfer|code|voucher)\b",
+            r"[^.\n]{0,40}?\b(?:pay|send|transfer|codes?|voucher)\b",
             r"\b(?:pay|send|transfer)\b[^.\n]{0,30}?\b(?:gift\s?cards?|"
             r"western union|moneygram|bitcoin|btc|usdt|crypto)\b",
             r"\b(?:scan (?:this|the) qr|payment link|upi id)\b",
@@ -415,9 +423,9 @@ RULES: tuple[ScamRule, ...] = (
         severity=Severity.HIGH,
         points=22,
         patterns=_compile(
-            r"\b\d{2,4}\s*%\s*(?:returns?|profits?|monthly|daily|weekly|"
+            r"\b\d{1,4}\s*%\s*(?:returns?|profits?|monthly|daily|weekly|"
             r"per (?:day|month|week)|guaranteed|assured)\b",
-            r"\b\d{2,4}\s*%\s*(?:in|within)\s+\d{1,2}\s*"
+            r"\b\d{1,4}\s*%\s*(?:in|within)\s+\d{1,2}\s*"
             r"(?:days?|weeks?|months?)\b",
             r"\b(?:earn|make|get)\s+(?:rs\.?|₹|inr|\$|usd)?\s?"
             r"\d[\d,]*\s*(?:per|a|every|each)\s*(?:day|week|month)\b"

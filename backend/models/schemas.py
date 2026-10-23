@@ -120,7 +120,7 @@ class RiskLevel(str, Enum):
 
 
 class ScamCategory(str, Enum):
-    """Dominant indicator family reported for a text analysis.
+    """Dominant indicator family reported for an analysis.
 
     Categories describe the *message pattern* that produced the strongest
     evidence. They are not accusations against a sender, and ``none`` means no

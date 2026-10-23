@@ -1,4 +1,4 @@
-"""Deterministic presentation helpers for text analysis.
+"""Deterministic presentation helpers for scam analysis.
 
 These helpers turn findings into plain-language advice. They never execute
 anything, never ask for credentials, and never upgrade a risk indicator into a
@@ -48,9 +48,10 @@ def build_limitations(
     """Return the caveats that apply to this specific analysis."""
     notes: list[str] = [
         (
-            "This analysis inspects the message text only. It does not verify "
-            "the sender, fetch links, inspect attachments, or confirm that any "
-            "organization named in the message is genuine."
+            "This analysis inspects only the submitted text and any links "
+            "inside it. It does not verify the sender, fetch links, inspect "
+            "attachments, or confirm that any organization named in the "
+            "message is genuine."
         ),
         (
             "The risk score reflects matches against a fixed rule list. It is "
