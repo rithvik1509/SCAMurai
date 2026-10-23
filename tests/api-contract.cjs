@@ -34,12 +34,20 @@ test("live API validates responses and never substitutes demo data on errors", a
         evidence: ["Share the OTP", "immediately"],
       },
     ],
-    recommended_actions: [
-      { priority: 1, action: "Do not share the code." },
-    ],
+    recommended_actions: [{ priority: 1, action: "Do not share the code." }],
     limitations: { notes: ["This does not verify the sender."] },
   };
   try {
+    payload = { service: "scamurai-backend", status: "ok" };
+    assert.equal(await api.health(), true);
+    assert.equal(endpoint, "/health");
+    payload = { status: "ok" };
+    assert.equal(await api.health(), false);
+    status = 503;
+    assert.equal(await api.health(), false);
+    status = 200;
+    payload = { service: "scamurai-backend", status: "ok" };
+    assert.equal(await api.health(), true);
     payload = backendResponse;
     const result = await api.analyze(input);
     assert.equal(result.demo, false);
@@ -51,7 +59,10 @@ test("live API validates responses and never substitutes demo data on errors", a
     });
     assert.equal(result.level, "HIGH");
     assert.equal(result.category, "Otp Theft");
-    assert.deepEqual(result.signals[0].evidence, ["Share the OTP", "immediately"]);
+    assert.deepEqual(result.signals[0].evidence, [
+      "Share the OTP",
+      "immediately",
+    ]);
     assert.deepEqual(result.actions, ["Do not share the code."]);
     payload = { ...backendResponse, risk_score: 150 };
     await assert.rejects(api.analyze(input), /unsupported response/);

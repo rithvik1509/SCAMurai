@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowUpRight, Menu, X, CircleHelp, ChevronRight } from "lucide-react";
 import { config } from "@/lib/config";
-import { health } from "@/lib/api";
+import { useApiHealth } from "@/lib/use-api-health";
 import { useAuth } from "@/lib/auth";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { LandingEntrance } from "@/components/brand/landing-entrance";
@@ -23,10 +23,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const { session } = useAuth();
   const [open, setOpen] = useState(false);
-  const [online, setOnline] = useState<boolean | null>(null);
-  useEffect(() => {
-    if (!config.demo) void health().then(setOnline);
-  }, []);
+  const online = useApiHealth();
   const links = [
     ["/", "Overview"],
     ["/#protection-modes", "Protection modes"],

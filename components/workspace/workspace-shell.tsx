@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { config } from "@/lib/config";
-import { health } from "@/lib/api";
+import { useApiHealth } from "@/lib/use-api-health";
 export const toolLinks = [
   {
     name: "YŌKAI investigation",
@@ -65,7 +65,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState(false);
   const [dialog, setDialog] = useState<"search" | "shortcuts" | null>(null);
   const [query, setQuery] = useState("");
-  const [online, setOnline] = useState<boolean | null>(null);
+  const online = useApiHealth();
   const modal = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (!loading && !session)
@@ -73,9 +73,6 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         `/login?next=${encodeURIComponent(path + window.location.search)}`,
       );
   }, [loading, session, path, router]);
-  useEffect(() => {
-    if (!config.demo) void health().then(setOnline);
-  }, []);
   useEffect(() => {
     setMobile(false);
     setAccount(false);
