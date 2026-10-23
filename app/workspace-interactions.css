@@ -1,0 +1,415 @@
+/* Workspace containment and interaction rhythm. */
+.console-sidebar {
+  min-height: 0;
+  max-height: calc(100dvh - 88px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #cdd2c5 transparent;
+  overscroll-behavior: contain;
+}
+.console-sidebar > * {
+  flex-shrink: 0;
+}
+.console-sidebar nav > a {
+  position: relative;
+  isolation: isolate;
+}
+.console-sidebar nav > a.selected {
+  background: transparent;
+}
+.console-sidebar nav > a > .workspace-nav-selection {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #111210;
+  z-index: -1;
+  pointer-events: none;
+}
+.console-sidebar nav > a > svg,
+.console-world button > svg,
+.console-world .button > svg {
+  flex-shrink: 0;
+}
+.console-top-actions {
+  flex-shrink: 0;
+}
+.console-title {
+  flex: 1;
+}
+.console-title > div {
+  min-width: 0;
+}
+.console-world
+  :is(
+    .console-card,
+    .overview-panel,
+    .mode-entry,
+    .scanner,
+    .mode-intro,
+    .mode-working-column,
+    .mode-guidance,
+    .quick-tools > a > div,
+    .recent-list > a > div
+  ) {
+  min-width: 0;
+}
+.mode-entry-bottom {
+  flex-wrap: wrap;
+  row-gap: 12px;
+}
+.mode-entry-bottom > span {
+  flex: 1 1 170px;
+  min-width: 0;
+}
+.mode-entry-bottom > strong {
+  max-width: 100%;
+  white-space: normal;
+}
+.console-world .scan-bottom,
+.console-world .report-actions,
+.console-world .examples,
+.console-world .report-heading {
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.console-world .scan-bottom > span {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.console-world .scan-bottom > .button {
+  min-width: min(170px, 100%);
+  flex: 0 1 auto;
+  margin-left: auto;
+}
+.console-world .button {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  justify-content: center;
+  overflow-wrap: anywhere;
+}
+.console-world .report-actions > .button {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.console-world .input-box,
+.console-world input,
+.console-world select,
+.console-world textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+.console-world .tool-search-results a > div {
+  min-width: 0;
+}
+.console-world .tool-search-results small {
+  overflow-wrap: anywhere;
+}
+
+/* Short laptop windows keep sign-out inside the sidebar. */
+@media (min-width: 761px) and (max-height: 800px) {
+  .console-sidebar {
+    padding-top: 20px;
+    padding-bottom: 16px;
+  }
+  .console-sidebar .console-brand {
+    margin-bottom: 20px;
+  }
+  .console-sidebar .console-nav-label {
+    margin-bottom: 10px;
+  }
+  .console-sidebar nav {
+    gap: 5px;
+    margin-bottom: 18px;
+  }
+  .console-sidebar nav > a {
+    min-height: 46px;
+    padding-block: 10px;
+  }
+  .console-sidebar .console-rescue-link {
+    padding-block: 10px;
+  }
+  .sidebar-bottom {
+    padding-top: 14px;
+  }
+  .sidebar-bottom > button {
+    padding-block: 10px;
+  }
+  .sidebar-session {
+    padding-block: 12px;
+  }
+}
+@media (max-width: 760px) {
+  .console-sidebar.expanded {
+    max-height: calc(100dvh - 32px);
+    max-width: calc(100vw - 32px);
+  }
+  .console-world .scan-bottom > span {
+    flex-basis: auto;
+  }
+  .console-world .scan-bottom > .button {
+    width: 100%;
+    margin-left: 0;
+  }
+  .console-top-actions {
+    gap: 5px;
+  }
+}
+
+/* Deliberate entry choreography; controls remain visible without scripting. */
+@keyframes workspace-arrive {
+  from {
+    opacity: 0.35;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes workspace-panel {
+  from {
+    opacity: 0.4;
+    transform: translateY(20px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes workspace-dialog {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes workspace-backdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes workspace-drawer {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes workspace-orbit {
+  from {
+    opacity: 0.3;
+    transform: rotate(-45deg) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-12deg) scale(1);
+  }
+}
+.workspace-route {
+  animation: workspace-arrive 0.38s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.dashboard-top-grid > *,
+.mode-entry-grid > *,
+.dashboard-bottom-grid > * {
+  animation: workspace-panel 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-fill-mode: backwards;
+}
+.dashboard-top-grid > :nth-child(2) {
+  animation-delay: 0.06s;
+}
+.mode-entry-grid > :first-child {
+  animation-delay: 0.1s;
+}
+.mode-entry-grid > :nth-child(2) {
+  animation-delay: 0.16s;
+}
+.dashboard-bottom-grid > :first-child {
+  animation-delay: 0.2s;
+}
+.dashboard-bottom-grid > :nth-child(2) {
+  animation-delay: 0.25s;
+}
+.mode-orbit {
+  animation: workspace-orbit 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.console-world .scanner {
+  animation: workspace-arrive 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.tool-dialog[open] {
+  animation: workspace-dialog 0.22s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.tool-dialog[open]::backdrop,
+.sidebar-scrim {
+  animation: workspace-backdrop 0.2s ease both;
+}
+.account-dropdown {
+  animation: workspace-dialog 0.18s ease both;
+  transform-origin: top right;
+}
+.console-sidebar.expanded {
+  animation: workspace-drawer 0.26s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.console-world
+  :is(
+    button,
+    .button,
+    .console-sidebar nav > a,
+    .console-rescue-link,
+    .quick-tools > a,
+    .glance-legend > a,
+    .recent-list > a,
+    .activity-empty > a,
+    .crypto-tool-tabs > a,
+    .mode-rescue-card
+  ) {
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1),
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.console-world
+  :is(
+    .quick-tools > a,
+    .glance-legend > a,
+    .recent-list > a,
+    .console-sidebar nav > a,
+    .mode-entry
+  )
+  > svg:last-child,
+.console-world
+  :is(
+    .mode-entry-arrow,
+    .mode-entry-bottom strong svg,
+    .mode-entry-art,
+    .mode-entry-art > i,
+    .mode-emblem
+  ) {
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1),
+    background-color 0.2s,
+    color 0.2s;
+}
+@media (hover: hover) {
+  .console-world
+    :is(.quick-tools > a, .glance-legend > a, .recent-list > a):hover {
+    background: #f1f4ed;
+    border-radius: 12px;
+  }
+  .console-world
+    :is(.quick-tools > a, .glance-legend > a, .recent-list > a):hover
+    > svg:last-child {
+    transform: translate(3px, -3px);
+    color: var(--accent-ink);
+  }
+  .console-world .console-sidebar nav > a:hover > svg:first-of-type {
+    transform: translateY(-2px);
+  }
+  .console-world :is(.button, .console-new):hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 15px #1f2e1418;
+  }
+  .console-world
+    :is(.console-icon-button, .account-button, .console-mobile-menu):hover {
+    background: #e9efdf;
+    transform: translateY(-2px);
+  }
+  .console-world .mode-entry:hover .mode-entry-arrow {
+    transform: rotate(7deg);
+    background: #ffffffb8;
+  }
+  .console-world .mode-entry:hover .mode-entry-bottom strong svg {
+    transform: translateX(5px);
+  }
+  .console-world .mode-entry:hover .mode-emblem {
+    transform: rotate(-6deg);
+  }
+  .console-world .mode-entry:hover .mode-entry-art > i:nth-child(2) {
+    transform: rotate(50deg);
+  }
+  .console-world .mode-entry:hover .mode-entry-art > i:nth-child(3) {
+    transform: rotate(75deg);
+  }
+  .console-world .mode-rescue-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 20px #303b2010;
+  }
+  .console-world .crypto-tool-tabs > a:not([aria-current]):hover {
+    background: #ffffffb8;
+  }
+}
+.console-world
+  :is(
+    button,
+    .button,
+    .quick-tools > a,
+    .glance-legend > a,
+    .recent-list > a,
+    .console-sidebar nav > a,
+    .crypto-tool-tabs > a
+  ):active:not(:disabled) {
+  transform: scale(0.97);
+}
+.console-world .mode-entry:active {
+  transform: translateY(-1px) scale(0.985);
+}
+.console-world .button:disabled {
+  transform: none;
+  box-shadow: none;
+}
+.console-world .mode-entry:focus-visible {
+  box-shadow: 0 0 0 5px #a1bd7130;
+}
+.console-world .quick-tools > a:focus-visible {
+  background: #eff4e8;
+  border-radius: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-route,
+  .dashboard-top-grid > *,
+  .mode-entry-grid > *,
+  .dashboard-bottom-grid > *,
+  .mode-orbit,
+  .console-world .scanner,
+  .tool-dialog[open],
+  .tool-dialog[open]::backdrop,
+  .account-dropdown,
+  .console-sidebar.expanded,
+  .sidebar-scrim {
+    animation: none;
+  }
+  .console-world
+    :is(
+      button,
+      a,
+      .mode-entry-art,
+      .mode-entry-art > i,
+      .mode-entry-arrow,
+      .mode-entry-bottom strong svg,
+      .mode-emblem
+    ) {
+    transition: none;
+  }
+  .console-world :is(button, a):active,
+  .console-world :is(button, a):hover,
+  .console-world .mode-entry:hover .mode-entry-art,
+  .console-world .mode-entry:hover .mode-emblem,
+  .console-world .mode-entry:hover .mode-entry-arrow,
+  .console-world .mode-entry:hover .mode-entry-bottom strong svg {
+    transform: none;
+  }
+}
