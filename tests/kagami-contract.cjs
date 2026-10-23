@@ -6,6 +6,41 @@ const api = require("../.kagami-check/kagami/api.js");
 const mocks = require("../.kagami-check/kagami/mocks.js");
 const types = require("../.kagami-check/kagami/types.js");
 const schemas = require("../.kagami-check/kagami/schemas.js");
+test('specific allowance client verifies returned pair and wallet context', async () => {
+  const savedFetch = global.fetch;
+  const report = liveWallet();
+  const permission = report.permissions.find(p => p.type === 'erc20');
+  try {
+    global.fetch = async (url, options) => {
+      assert.match(url, /wallets\/check-allowance$/);
+      const body = JSON.parse(options.body);
+      assert.equal(body.token, permission.token);
+      return Response.json(report);
+    };
+    const result = await api.checkAllowance(report.wallet, report.network, permission.token, permission.spender, new AbortController().signal);
+    assert.equal(result.id, report.id);
+    await assert.rejects(() => api.checkAllowance(report.wallet, report.network, permission.token, '0x' + 'aa'.repeat(20), new AbortController().signal), /different allowance/);
+  } finally { global.fetch = savedFetch; }
+});
+test("unsigned calldata builder preserves exact integers and supports canonical ERC-20 operations", () => {
+  const target = "0x" + "22".repeat(20),
+    owner = "0x" + "11".repeat(20);
+  const max = ((1n << 256n) - 1n).toString();
+  const approval = types.buildErc20Calldata("approve", target, max);
+  assert.equal(approval.slice(-64), "f".repeat(64));
+  assert.equal(types.buildErc20Calldata("transfer", target, "0").length, 138);
+  assert.equal(
+    types.buildErc20Calldata("transferFrom", target, "1", owner).length,
+    202,
+  );
+  assert.throws(() =>
+    types.buildErc20Calldata("approve", target, (1n << 256n).toString()),
+  );
+  assert.throws(() => types.buildErc20Calldata("approve", target, "1.5"));
+  assert.throws(() =>
+    types.buildErc20Calldata("transferFrom", target, "1", "bad"),
+  );
+});
 const liveWallet = () => {
   const job = mocks.createWalletFixture("ethereum");
   return {

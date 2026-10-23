@@ -12,6 +12,7 @@ import {
   CircleHelp,
 } from "lucide-react";
 import type { BrowserCapture, Finding } from "@/lib/yokai/types";
+import { EvidenceSummary } from "./evidence-summary";
 type View = "screenshots" | "structure" | "forms" | "network";
 const views = [
   { id: "screenshots" as const, label: "Screenshots", Icon: ImageIcon },
@@ -101,6 +102,7 @@ export function BrowserComparison({
           ))}
         </div>
       </div>
+      <EvidenceSummary captures={captures} findings={findings} />
       {findings
         .filter((f) => f.tone !== "normal")
         .map((f) => (
@@ -111,7 +113,9 @@ export function BrowserComparison({
           >
             <span>
               <strong>{f.title}</strong>
+              {f.severity && <small>Review priority: {f.severity}</small>}
               <small>{f.explanation}</small>
+              {f.confidence && <small>{f.confidence}</small>}
             </span>
             <ArrowRight size={18} />
           </button>
@@ -241,6 +245,29 @@ export function BrowserComparison({
                         <li key={`${heading}-${i}`}>{heading}</li>
                       ))}
                     </ol>
+                    {!!c.structure.actionLabels?.length && (
+                      <>
+                        <h4>Visible actions</h4>
+                        <ul className="yk-heading-list">
+                          {c.structure.actionLabels.map((label, i) => (
+                            <li key={i}>{label}</li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                    {!!c.structure.textBlocks?.length && (
+                      <details>
+                        <summary>
+                          Recorded visible text ({c.structure.textBlocks.length}{" "}
+                          excerpts)
+                        </summary>
+                        <ol className="yk-heading-list">
+                          {c.structure.textBlocks.map((text, i) => (
+                            <li key={i}>{text}</li>
+                          ))}
+                        </ol>
+                      </details>
+                    )}
                   </>
                 ) : (
                   <p className="yk-muted">

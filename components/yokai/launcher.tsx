@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { demoCases } from "@/lib/yokai/fixtures";
+import { config } from "@/lib/config";
 import {
   profileLabels,
   statusLabels,
@@ -59,6 +60,11 @@ export function InvestigationLauncher({
       });
   }, [demo, supportedProfiles, capabilities?.available]);
   const selected = demoCases.find((d) => d.id === scenario)!;
+  const localApi = new URL(config.apiUrl);
+  const localTestsAvailable =
+    !demo &&
+    ["localhost", "127.0.0.1"].includes(localApi.hostname) &&
+    capabilities?.allowedOrigins.includes(localApi.origin);
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError("");
@@ -92,6 +98,7 @@ export function InvestigationLauncher({
     }
     if (
       !demo &&
+      !capabilities?.publicTargets &&
       capabilities?.allowedOrigins.length &&
       !capabilities.allowedOrigins.includes(url.origin)
     ) {
@@ -154,6 +161,33 @@ export function InvestigationLauncher({
               required
             />
           </div>
+          {localTestsAvailable && (
+            <div className="yk-local-tests">
+              <p className="yk-field-note">
+                Try a controlled local page. These run real browser investigations.
+              </p>
+              <div>
+                {[
+                  ["responsive", "Responsive layout"],
+                  ["payment", "Conditional payment form"],
+                  ["redirect", "Profile redirects"],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className="yk-secondary"
+                    disabled={busy}
+                    onClick={() => {
+                      setTarget(`${localApi.origin}/api/v1/kage/__yokai_fixture__/${id}`);
+                      setError("");
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <p id="yk-authorization" className="yk-field-note">
             {capabilities?.authorizationPolicy ||
               "Checking investigation availability…"}
@@ -161,7 +195,7 @@ export function InvestigationLauncher({
           {!demo && !!capabilities?.allowedOrigins.length && (
             <details className="yk-advanced">
               <summary>
-                Permitted origins <ChevronDown size={14} />
+                {capabilities.publicTargets ? "Local test origins" : "Permitted origins"} <ChevronDown size={14} />
               </summary>
               <ul>
                 {capabilities.allowedOrigins.map((origin) => (
@@ -254,8 +288,8 @@ export function InvestigationLauncher({
               </p>
             )}
             <fieldset disabled={demo || busy}>
-              <label>
-                Observation timeout
+              <label className="yk-timeout-option">
+                <span>Observation timeout</span>
                 <select
                   aria-label="Observation timeout"
                   value={timeout}
@@ -263,24 +297,24 @@ export function InvestigationLauncher({
                 >
                   <option value={15}>15 seconds</option>
                   <option value={30}>30 seconds</option>
-                  <option value={60}>60 seconds</option>
+                  <option value={45}>45 seconds</option>
                 </select>
               </label>
-              <label>
+              <label className="yk-checkbox-option">
                 <input
                   type="checkbox"
                   checked={screenshots}
                   onChange={(e) => setScreenshots(e.target.checked)}
-                />{" "}
-                Capture screenshots
+                />
+                <span>Capture screenshots</span>
               </label>
-              <label>
+              <label className="yk-checkbox-option">
                 <input
                   type="checkbox"
                   checked={network}
                   onChange={(e) => setNetwork(e.target.checked)}
-                />{" "}
-                Include network observations
+                />
+                <span>Include network observations</span>
               </label>
             </fieldset>
           </details>
@@ -290,8 +324,8 @@ export function InvestigationLauncher({
                 type="checkbox"
                 checked={authorized}
                 onChange={(e) => setAuthorized(e.target.checked)}
-              />{" "}
-              I own this target or have permission to investigate it.
+              />
+              <span>I own this target or have permission to investigate it.</span>
             </label>
           )}
           {error && (

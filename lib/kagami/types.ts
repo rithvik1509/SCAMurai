@@ -153,6 +153,35 @@ export const severityLabels: Record<Severity, string> = {
 export function isAddress(value: string) {
   return /^0x[0-9a-fA-F]{40}$/.test(value);
 }
+export function buildErc20Calldata(
+  method: "approve" | "transfer" | "transferFrom",
+  destination: string,
+  amountRaw: string,
+  owner = "",
+) {
+  if (
+    !isAddress(destination) ||
+    (method === "transferFrom" && !isAddress(owner))
+  )
+    throw Error("Enter valid destination and owner addresses.");
+  if (
+    !/^(0|[1-9][0-9]*)$/.test(amountRaw) ||
+    amountRaw.length > 78 ||
+    BigInt(amountRaw) >= 1n << 256n
+  )
+    throw Error("Amount must be an exact uint256 integer in raw token units.");
+  const addressWord = (value: string) =>
+    value.slice(2).toLowerCase().padStart(64, "0");
+  return (
+    "0x" +
+    { approve: "095ea7b3", transfer: "a9059cbb", transferFrom: "23b872dd" }[
+      method
+    ] +
+    (method === "transferFrom" ? addressWord(owner) : "") +
+    addressWord(destination) +
+    BigInt(amountRaw).toString(16).padStart(64, "0")
+  );
+}
 export function shortAddress(value: string) {
   return value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
 }
