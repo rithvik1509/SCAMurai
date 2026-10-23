@@ -7,15 +7,22 @@ import type {
   RescueResponse,
 } from "./types";
 export class ApiError extends Error {}
-async function request(path: string, body?: unknown): Promise<unknown> {
+async function request(
+  path: string,
+  body?: unknown,
+  signal?: AbortSignal,
+): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), config.timeout);
   try {
-    const response = await fetch(`${config.apiUrl}${path}`, {
+    const response = await fetch(`${config.apiUrl.replace(/\/$/, "")}${path}`, {
       method: body ? "POST" : "GET",
       headers: body ? { "Content-Type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal,
+      signal: signal
+        ? AbortSignal.any([controller.signal, signal])
+        : controller.signal,
+      cache: "no-store",
     });
     if (!response.ok)
       throw new ApiError(`Service returned ${response.status}. Please retry.`);
@@ -48,10 +55,10 @@ function validateAnalysis(value: unknown, input: string): Analysis {
     high: "HIGH",
     critical: "HIGH",
   };
-  const signals = response?.signals as Array<Record<string, unknown>> | undefined;
+  const signals = response?.signals as
+    Array<Record<string, unknown>> | undefined;
   const actions = response?.recommended_actions as
-    | Array<Record<string, unknown>>
-    | undefined;
+    Array<Record<string, unknown>> | undefined;
   const limitations = response?.limitations?.notes;
   if (
     !response ||
@@ -131,10 +138,15 @@ export async function rescue(incident: Incident): Promise<RescueResponse> {
     "Live rescue guidance is not available yet in the backend. Enable demo mode to view sample guidance.",
   );
 }
-export async function health(): Promise<boolean> {
+export async function health(signal?: AbortSignal): Promise<boolean> {
   try {
-    await request("/health");
-    return true;
+    const response = (await request("/health", undefined, signal)) as {
+      status?: unknown;
+      service?: unknown;
+    } | null;
+    return (
+      response?.status === "ok" && response?.service === "scamurai-backend"
+    );
   } catch {
     return false;
   }
