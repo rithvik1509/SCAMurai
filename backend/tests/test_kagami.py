@@ -288,3 +288,16 @@ async def test_rpc_transport_never_accepts_broadcast_method(api):
     _, _, app = api
     with pytest.raises(ValueError, match='read-only'):
         await app.state.kagami.rpc.call('sepolia', 'eth_sendRawTransaction', ['0x00'])
+
+@pytest.mark.parametrize('failure,expected', [('timeout','timed out'),('denied','refused'),('busy','busy')])
+def test_provider_failures_explain_connection_problem_without_leaking_secrets(tmp_path, failure, expected):
+    def handler(request):
+        if failure == 'timeout':
+            raise httpx.ReadTimeout('sensitive provider response at secret-token',request=request)
+        return httpx.Response(403 if failure == 'denied' else 429,text='secret-token sensitive provider response')
+    settings = Settings(environment='test',rpc_urls={'sepolia':'https://rpc.example/secret-token'},snapshot_db=str(tmp_path/'errors.sqlite3'))
+    with TestClient(create_app(settings,rpc_transport=httpx.MockTransport(handler))) as client:
+        response = client.post(PREFIX+'/wallets/analyze',json={'wallet':WALLET,'network':'sepolia'})
+        assert response.status_code == 503
+        assert expected in response.text
+        assert 'secret-token' not in response.text and 'sensitive provider response' not in response.text

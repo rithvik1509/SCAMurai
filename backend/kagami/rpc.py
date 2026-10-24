@@ -67,7 +67,16 @@ class Rpc:
             if 'result' not in payload:
                 raise RpcError()
             return payload['result']
-        except (httpx.HTTPError, ValueError, TypeError, OverflowError) as exc:
+        except httpx.TimeoutException:
+            raise RpcError('The blockchain connection timed out. Please retry shortly.') from None
+        except httpx.HTTPStatusError as exc:
+            status = exc.response.status_code
+            if status == 429:
+                raise RpcError('The blockchain provider is busy. Please retry shortly.') from None
+            if status in (401, 403):
+                raise RpcError('The blockchain provider refused this server connection. The service operator must check its provider access.') from None
+            raise RpcError(f'The blockchain provider returned HTTP {status}. Please retry shortly.') from None
+        except (httpx.HTTPError, ValueError, TypeError, OverflowError):
             # Never propagate provider URLs, credentials, raw errors or response bodies.
             raise RpcError() from None
 
