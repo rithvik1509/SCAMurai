@@ -265,6 +265,11 @@ backend/.venv/bin/python -m pytest -q
 
 Implementation status can change as features are integrated. Verify the current code and live API documentation before relying on a specific workflow.
 
+## Team
+
+- [Your Name](https://github.com/rithvik1509)
+- [Teammate Name](https://github.com/teammate-username)
+
 ## Safety and Security
 
 - Investigate websites only when you own them or have explicit authorisation to test them.
@@ -327,4 +332,3 @@ Configure only the settings supported by the code in your branch. Never commit A
 - Extend EVM network and transaction-simulation coverage.
 - Add evidence-grounded AI summaries and correlations between website and wallet findings.
 - Complete planned browser-extension and wallet integrations.
-
