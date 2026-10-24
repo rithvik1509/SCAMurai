@@ -62,18 +62,6 @@ Previews supported blockchain transaction outcomes before a user proceeds.
 
 Results depend on the supported transaction type, network, RPC availability, and simulation limitations. A preview is not a guarantee of the final on-chain outcome.
 
-### 5. Scam-Message and URL Analysis
-
-The deterministic analysis endpoint checks submitted message text and statically parsed URLs for indicators such as:
-
-- Urgency and pressure tactics.
-- Impersonation and suspicious claims.
-- Threats and unusual payment demands.
-- Suspicious rewards and offers.
-- Other rule-matched warning signs.
-
-The endpoint returns matched signals and recommended actions without requiring an LLM for this analysis path.
-
 **Risk scores are indicators, not probabilities of fraud.**
 
 ## Architecture
