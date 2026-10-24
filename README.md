@@ -8,11 +8,19 @@ Investigate suspicious website behaviour, understand wallet permissions, and rev
 
 **Python 3.11+ · FastAPI · Playwright · EVM-Compatible Blockchain Analysis**
 
+**🌐 Live Demo: [https://scamurai-phi.vercel.app](https://scamurai-phi.vercel.app/)**
+
 </div>
 
 ---
 
 > **Project status:** Under active development. Some investigation workflows require additional configuration, and some capabilities remain on the roadmap. Treat findings as security signals to review, not as proof of fraud or compromise.
+
+## Live Demo
+
+Try the deployed frontend at **[scamurai-phi.vercel.app](https://scamurai-phi.vercel.app/)**.
+
+> The hosted demo reflects the current state of development. Some investigation workflows may be unavailable or limited until the backend and frontend integration is complete.
 
 ## Overview
 
@@ -99,7 +107,7 @@ flowchart TD
 | Scam Analysis | Deterministic rules, URL parsing, evidence extraction |
 | Wallet Analysis | `eth-abi`, `eth-utils`, EVM-compatible data, Ethereum JSON-RPC |
 | Testing | pytest, pytest-asyncio |
-| Deployment | Vercel, Python API hosting, REST API |
+| Deployment | Vercel ([live frontend](https://scamurai-phi.vercel.app/)), Python API hosting, REST API |
 
 ## Getting Started
 
