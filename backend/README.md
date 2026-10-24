@@ -120,14 +120,18 @@ restored, edited or reconfigured. This backend runs independently.
 
 ## Real local website investigation
 
-Public website testing can be enabled locally with
+Public website testing can be enabled with
 `YOKAI_PUBLIC_TARGETS_ENABLED=true` in `backend/.env`, then restart the API.
 The frontend receives `publicTargets: true` and accepts public HTTP(S) targets
 without a per-domain allowlist. Public cross-origin assets and redirects are
 permitted; private/special-use IPs, private DNS answers, embedded credentials,
 mutation requests and WebSockets remain blocked. Nonstandard ports require an
 explicit operator allowlist. Confirm permission before starting. This setting
-is rejected in production and does not provide hardened network isolation.
+is supported in production and does not provide hardened network isolation.
+The deployment Dockerfile enables it by default. If Render already has
+`YOKAI_PUBLIC_TARGETS_ENABLED=false` in its Environment settings, change that
+value to `true` and redeploy; runtime variables override Docker defaults.
+Public mode removes the per-domain allowlist, not private-network protection.
 
 Controlled development pages:
 

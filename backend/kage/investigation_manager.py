@@ -77,7 +77,7 @@ class InvestigationManager:
             "profiles": ["desktop", "mobile", "returning"],
             "allowed_origins": origins,
             "authorization_policy": (
-                'Public HTTP(S) websites are enabled for local testing. Confirm permission to investigate. Private networks and unsafe destinations remain blocked.'
+                'Public HTTP(S) websites can be investigated without a per-domain allowlist. Confirm permission to investigate. Private networks, unsafe destinations, and form submissions remain blocked.'
                 if self.policy.allow_public_targets else
                 "Only explicitly configured YOKAI_ALLOWED_ORIGINS and the built-in "
                 "development fixture path are permitted. Investigate only targets "

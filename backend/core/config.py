@@ -93,8 +93,6 @@ class Settings(BaseModel):
                 raise ValueError('RPC endpoints require HTTPS; development permits loopback HTTP.')
         if self.environment == Environment.PRODUCTION and self.local_fixtures_enabled:
             raise ValueError('Disable LOCAL_FIXTURES_ENABLED in production.')
-        if self.environment == Environment.PRODUCTION and self.yokai_public_targets_enabled:
-            raise ValueError('Public target mode is for local development only.')
         return self
 
     @field_validator("cors_allowed_origins", mode="before")
