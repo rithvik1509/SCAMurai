@@ -2,7 +2,7 @@
 
 # SCAMurai
 
-### Evidence-First Web and Cryptocurrency Security Investigations
+### Evidence-First Browser and Blockchain Security Investigations
 
 Investigate suspicious website behaviour, understand wallet permissions, and review security findings before acting.
 
@@ -26,7 +26,7 @@ Try the deployed frontend at **[scamurai-phi.vercel.app](https://scamurai-phi.ve
 
 Traditional scam detection can miss websites that change their behaviour across devices or browser environments. At the same time, cryptocurrency wallet permissions can be difficult to understand when approvals and delegations are displayed separately.
 
-**SCAMurai brings these investigation paths together in one platform.** It combines rule-based scam-message and URL analysis, controlled browser investigations, and wallet-permission analysis, with an emphasis on making supporting evidence understandable.
+**SCAMurai brings two investigation engines together in one platform:** KAGE (YŌKAI) for controlled browser-behaviour investigations and KAGAMI for blockchain wallet-permission and transaction analysis. Both emphasise clear, reviewable evidence.
 
 ## Core Capabilities
 
@@ -39,7 +39,7 @@ Uses Playwright-based browser automation to compare how an authorised website be
 - Use controlled local fixtures for repeatable demonstrations.
 - Identify suspicious forms, redirects, and behaviour that may depend on browser conditions.
 
-### 2. KAGAMI / KUROKAGI — Wallet Authority Analysis
+### 2. KAGAMI — Wallet Authority Analysis
 
 Examines supported wallet permissions and their relationships to help make potential exposure paths easier to understand.
 
@@ -48,7 +48,7 @@ Examines supported wallet permissions and their relationships to help make poten
 - Decode supported transaction data.
 - Preview supported transaction outcomes when network configuration is available.
 
-### 3. Approval Timebomb — Allowance Risk Review
+#### Approval Timebomb — Allowance Risk Review
 
 Highlights potentially risky outstanding token allowances, including permissions that may grant a spender broader access than expected.
 
@@ -56,7 +56,7 @@ The goal is to help users understand which permissions deserve closer review bef
 
 A finding is a prompt for review, not proof that a wallet has been compromised.
 
-### 4. Wallet FutureView — Transaction Preview
+#### Wallet FutureView — Transaction Preview
 
 Previews supported blockchain transaction outcomes before a user proceeds.
 
@@ -70,15 +70,12 @@ Results depend on the supported transaction type, network, RPC availability, and
 flowchart TD
     A[User Input] --> B[FastAPI Backend]
 
-    A1[Message or URL] --> B
-    A2[Website Investigation Request] --> B
-    A3[Wallet or Transaction Data] --> B
+    A1[Website Investigation Request] --> B
+    A2[Wallet or Transaction Data] --> B
 
-    B --> C[Rule-Based Text and URL Analysis]
     B --> D[KAGE / YŌKAI Browser Investigation]
-    B --> E[KAGAMI / KUROKAGI Wallet Analysis]
+    B --> E[KAGAMI Wallet Analysis]
 
-    C --> F[Structured Findings and Evidence]
     D --> F
     E --> F
 
@@ -92,7 +89,6 @@ flowchart TD
 | Frontend | Next.js, TypeScript, Tailwind CSS, shadcn/ui, Lucide |
 | Backend API | Python 3.11+, FastAPI, Pydantic, httpx |
 | Browser Investigation | Playwright, Chromium |
-| Scam Analysis | Deterministic rules, URL parsing, evidence extraction |
 | Wallet Analysis | `eth-abi`, `eth-utils`, EVM-compatible data, Ethereum JSON-RPC |
 | Testing | pytest, pytest-asyncio |
 | Deployment | Vercel ([live frontend](https://scamurai-phi.vercel.app/)), Python API hosting, REST API |
@@ -232,7 +228,6 @@ backend/.venv/bin/python -m pytest -q
 - FastAPI backend foundation.
 - Request validation using Pydantic.
 - Middleware and backend API structure.
-- Deterministic message and URL analysis.
 
 ### In Progress or Configuration-Dependent
 
@@ -283,7 +278,6 @@ The following routes describe the intended API surface. Availability and exact r
 | Method | Endpoint | Purpose |
 |---|---|---|
 | `GET` | `/health` | Basic service health. |
-| `POST` | `/api/v1/analyze` | Rule-based scam-message and static URL analysis. |
 | `GET` | `/api/v1/kage/health` | Check browser-worker readiness. |
 | `GET` | `/api/v1/kage/capabilities` | List available investigation capabilities. |
 | `POST` | `/api/v1/kage/investigations` | Start an authorised investigation. |
