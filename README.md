@@ -267,8 +267,12 @@ Implementation status can change as features are integrated. Verify the current 
 
 ## Team
 
-- [Your Name](https://github.com/rithvik1509)
-- [Teammate Name](https://github.com/teammate-username)
+**Team Nexus**
+
+- [Rohit Kumar](https://github.com/rohithakumar)
+- [Manish Shettigar](https://github.com/manish77-git)
+- [K Dhanush Kudva](https://github.com/dhanushkudva)
+- [Rithvik L Bangera](https://github.com/rithvik1509)
 
 ## Safety and Security
 
