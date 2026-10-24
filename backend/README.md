@@ -198,6 +198,15 @@ isolation policy is included. Set `APP_ENV=production`,
 
 ## Layout
 
+The deployment Dockerfile configures a public, read-only Ethereum provider at
+`https://ethereum-rpc.publicnode.com`, historical approval discovery on Ethereum,
+and supported unsigned previews. Runtime `ETHEREUM_RPC_URL`,
+`APPROVAL_INDEXER_NETWORKS`, and `SIMULATION_NETWORKS` override these defaults.
+An explicitly blank RPC variable disables that network; remove the blank override
+or set the provider URL in Render. No signing key or wallet connection is needed.
+The shared provider can rate-limit requests; failures remain visible and approval
+coverage remains partial. Operators can configure their own HTTPS provider.
+
 ```
 backend/
   main.py                  # app factory, lifespan, middleware, routes
