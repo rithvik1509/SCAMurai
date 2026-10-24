@@ -65,7 +65,7 @@ class Settings(BaseModel):
     approval_lookback_blocks: int = Field(default=1000, ge=1, le=10000)
     approval_chunk_blocks: int = Field(default=1000, ge=100, le=2000)
     approval_max_candidates: int = Field(default=50, ge=1, le=200)
-    kagami_timeout_seconds: int = Field(default=12, ge=1, le=60)
+    kagami_timeout_seconds: int = Field(default=30, ge=1, le=60)
     kagami_max_concurrency: int = Field(default=2, ge=1, le=8)
     rpc_timeout_seconds: float = Field(default=4.0, ge=0.1, le=15)
     snapshot_db: str = str(BACKEND_DIR / 'data' / 'snapshots.sqlite3')

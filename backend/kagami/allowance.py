@@ -1,6 +1,7 @@
 """Discover bounded Approval candidates and verify state at a recorded block."""
 from __future__ import annotations
 import asyncio
+import time
 
 from eth_abi import decode, encode
 from eth_utils import keccak, to_checksum_address
@@ -49,6 +50,7 @@ async def token_metadata(rpc: Rpc, network: str, token: str, block: int) -> tupl
 
 async def inspect_allowances(rpc: Rpc, network: str, wallet: str, block: int):
     settings = rpc.settings
+    started = time.monotonic()
     start = max(0, block - settings.approval_lookback_blocks + 1)
     candidates: dict[tuple[str, str], str] = {}
     limitations = [
@@ -68,7 +70,7 @@ async def inspect_allowances(rpc: Rpc, network: str, wallet: str, block: int):
                                                for low in range(start, block + 1, settings.approval_chunk_blocks)]
     for low, high in ranges:
         try:
-            if use_indexer:
+            if use_indexer and low == 0:
                 from backend.kagami.indexer import indexed_approvals
                 logs = await indexed_approvals(rpc, network, wallet, block)
             else:
@@ -108,6 +110,12 @@ async def inspect_allowances(rpc: Rpc, network: str, wallet: str, block: int):
         except (RpcError, ValueError, TypeError):
             limitations.append(f'Approval discovery was incomplete for blocks {low}–{high}.')
             discovery_ok = False
+            if use_indexer and low == 0:
+                recent = max(1, block - settings.approval_lookback_blocks + 1)
+                ranges.extend((n, min(block, n + settings.approval_chunk_blocks - 1))
+                              for n in range(recent, block + 1, settings.approval_chunk_blocks))
+                limitations.append('Historical discovery failed after retrying. Recent Approval events were checked directly; older permissions may be missing.')
+                evidence[0].reference += f' Historical query was incomplete; fallback eth_getLogs checked blocks {recent}-{block}.'
         if len(candidates) >= settings.approval_max_candidates:
             break
 
@@ -121,7 +129,7 @@ async def inspect_allowances(rpc: Rpc, network: str, wallet: str, block: int):
              for index, ((token, spender), tx) in enumerate(candidates.items())]
     if tasks:
         try:
-            done, pending = await asyncio.wait(tasks, timeout=max(1, settings.kagami_timeout_seconds - 7))
+            done, pending = await asyncio.wait(tasks, timeout=max(1, settings.kagami_timeout_seconds - (time.monotonic() - started) - 6))
         finally:
             unfinished = [task for task in tasks if not task.done()]
             for task in unfinished:
@@ -146,7 +154,11 @@ async def verify_allowance(rpc: Rpc, network: str, wallet: str, token: str, spen
                            block: int, index: int = 0, provenance: str = 'User-supplied token/spender pair'):
     """A candidate or user input is never accepted without an actual state read."""
     amount = uint_word(await rpc.contract_call(network, token, allowance_data(wallet, spender), block))
-    symbol, decimals = await token_metadata(rpc, network, token, block)
+    try:
+        symbol, decimals = await asyncio.wait_for(token_metadata(rpc, network, token, block), timeout=2)
+    except TimeoutError:
+        # A slow name/decimals lookup must not discard a verified permission.
+        symbol, decimals = None, None
     key = f'allowance-{index}'
     item = Evidence(id=key, label='Verified current ERC-20 allowance', source='chain',
                     reference=f'{network}: token={token}; allowance({wallet},{spender})={amount}; block={block}; {provenance}')

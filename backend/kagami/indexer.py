@@ -12,13 +12,13 @@ INDEXERS = {
 }
 
 
-async def indexed_approvals(rpc: Rpc, network: str, wallet: str, block: int) -> list:
+async def _indexed_approvals(rpc: Rpc, network: str, wallet: str, block: int) -> list:
     from backend.kagami.allowance import APPROVAL_TOPIC, address_topic
     try:
         async with rpc.client.stream('GET', INDEXERS[network], params={
             'module': 'logs', 'action': 'getLogs', 'fromBlock': '0', 'toBlock': str(block),
             'topic0': APPROVAL_TOPIC, 'topic1': address_topic(wallet), 'topic0_1_opr': 'and',
-        }, timeout=min(4, rpc.settings.rpc_timeout_seconds)) as response:
+        }, timeout=min(8, rpc.settings.rpc_timeout_seconds * 2)) as response:
             response.raise_for_status()
             body = bytearray()
             async for chunk in response.aiter_bytes():
@@ -35,3 +35,13 @@ async def indexed_approvals(rpc: Rpc, network: str, wallet: str, block: int) -> 
         return payload['result']
     except (httpx.HTTPError, ValueError, TypeError):
         raise RpcError('Approval history indexer is unavailable.') from None
+
+
+async def indexed_approvals(rpc: Rpc, network: str, wallet: str, block: int) -> list:
+    # A transient history failure must not silently become an empty wallet.
+    for attempt in range(2):
+        try:
+            return await _indexed_approvals(rpc, network, wallet, block)
+        except RpcError:
+            if attempt:
+                raise
